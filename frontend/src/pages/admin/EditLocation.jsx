@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import backgroundImage from "../assets/cc3.png";
+import backgroundImage from "../../assets/cc3.png";
 
 const dummyLocation = {
   id: 1,

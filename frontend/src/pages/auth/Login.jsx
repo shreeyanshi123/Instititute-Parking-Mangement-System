@@ -9,6 +9,7 @@ const Login = () => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [userdetails, setUserDetails] = useState(null);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,7 +23,12 @@ const Login = () => {
       });
   
       if (response.data.success) {
-        navigate("/home");
+        setUserDetails(response.data.user); // Store user details in state
+        if(response.data.user.role === "admin") {
+        navigate("/admin/home");
+        } else if(response.data.user.role === "faculty_student" || response.data.user.role === "visitor") {
+          navigate("/user/home");
+        }
       } else {
         toast.error(response.data.message || "Login failed. Please try again.", { position: "top-right" });
       }

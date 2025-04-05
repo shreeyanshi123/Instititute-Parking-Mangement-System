@@ -1,14 +1,15 @@
-import AdminNavbar from "../components/AdminNavbar";
-import backgroundImage from "../assets/bus.png";
-import LocationCard from "../components/LocationCard";
+import AdminNavbar from "../../components/Admin/AdminNavbar";
+import backgroundImage from "../../assets/road.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
-const Home = () => {
+import AdminLocationCard from "../../components/Admin/AdminLocationCard";
+const AdminHome = () => {
   const [location, setLocation] = useState([]);
   const [isloading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   useEffect(() => {
-    axios.get("http://localhost:5000/admin/get")
+    axios
+      .get("http://localhost:5000/admin/get")
       .then((res) => {
         console.log(res.data); // ✅ Check actual response
         console.log(res.data.locations); // ✅ Check if locations exist
@@ -21,7 +22,6 @@ const Home = () => {
         setLoading(false);
       });
   }, []);
-
 
   const handleEdit = (id) => {
     console.log(`Editing slots for location ID: ${id}`);
@@ -38,7 +38,8 @@ const Home = () => {
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
-        <div className="absolute inset-0 bg-black/40"></div> {/* Black overlay ONLY on the background */}
+        <div className="absolute inset-0 bg-black/40"></div>{" "}
+        {/* Black overlay ONLY on the background */}
       </div>
 
       {/* Fixed Navbar */}
@@ -54,7 +55,7 @@ const Home = () => {
       {/* Location Cards Section (Responsive Grid) */}
       <div className="relative p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
         {location.map((locationElement) => (
-          <LocationCard
+          <AdminLocationCard
             key={locationElement.location_id}
             id={locationElement.location_id}
             image={locationElement.image_url}
@@ -68,4 +69,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default AdminHome;

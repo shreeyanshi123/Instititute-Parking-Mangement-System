@@ -13,9 +13,6 @@ CREATE TABLE Users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
-
 CREATE TABLE Locations (
     location_id INT PRIMARY KEY AUTO_INCREMENT,
     location_name VARCHAR(255) NOT NULL,
@@ -33,3 +30,29 @@ CREATE TABLE ParkingSlots (
     FOREIGN KEY (location_id) REFERENCES Locations(location_id) ON DELETE CASCADE
 );
 ALTER TABLE Locations ADD COLUMN image_url VARCHAR(500);
+
+-- Vehicles Table
+CREATE TABLE Vehicles (
+    vehicle_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    vehicle_number VARCHAR(20) UNIQUE NOT NULL,
+    vehicle_type ENUM('Car', 'Bike', 'Other') NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+-- Bookings Table
+CREATE TABLE Bookings (
+    booking_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    vehicle_id INT NOT NULL,
+    slot_id INT NOT NULL,
+    released BOOLEAN DEFAULT FALSE,
+    booking_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    status ENUM('Active', 'Completed', 'Expired') DEFAULT 'Active',
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES Vehicles(vehicle_id) ON DELETE CASCADE,
+    FOREIGN KEY (slot_id) REFERENCES ParkingSlots(slot_id) ON DELETE CASCADE
+);
+
+

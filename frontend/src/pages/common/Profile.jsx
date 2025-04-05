@@ -7,9 +7,9 @@ const Profile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [user, setUser] = useState({
-    name: "Admin User",
-    email: "admin@example.com",
-    role: "Administrator",
+    name: "abcd",
+    email: "abcd@example.com",
+    role: "abcd",
   });
   const [newUsername, setNewUsername] = useState(user.name);
   const [newEmail, setNewEmail] = useState(user.email);
@@ -53,7 +53,7 @@ const Profile = () => {
       <main className="flex-1 p-8">
         <h1 className="text-3xl font-bold">Profile</h1>
         <div className="mt-6 space-y-4">
-          <p className="text-lg"><strong>Name:</strong> {user.name}</p>
+          <p className="text-lg"><strong>Name:</strong> {user.name} </p>
           <p className="text-lg"><strong>Email:</strong> {user.email}</p>
           <p className="text-lg"><strong>Role:</strong> {user.role}</p>
         </div>

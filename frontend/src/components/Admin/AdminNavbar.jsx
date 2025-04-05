@@ -24,7 +24,7 @@ const AdminNavbar = () => {
         <div className="flex justify-between h-16 items-center">
           {/* Brand Logo */}
           <Link to="/home" className="text-2xl font-bold text-blue-400">
-            🅿️ IIITA Parking
+             IIITA Parking
           </Link>
 
           {/* Right Section (Profile & Add Slots) */}

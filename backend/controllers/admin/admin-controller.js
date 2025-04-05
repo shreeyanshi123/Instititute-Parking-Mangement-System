@@ -2,7 +2,6 @@ import db from "../../config/db.js";
 import { imageUploadUtil } from "../../helpers/cloudinary.js";
 
 
-
 export const handleImageUpload = async (req, res) => {
     try {
         if (!req.file) {
@@ -127,9 +126,9 @@ export const getSlots = async (req, res) => {
     try {
         const connection = db.promise();
 
-        // Check if location_id exists in Locations table
+        // Fetch location name along with location_id
         const [rows] = await connection.query(
-            "SELECT location_id FROM Locations WHERE location_id = ?",
+            "SELECT location_name FROM Locations WHERE location_id = ?",
             [location_id]
         );
 
@@ -139,11 +138,24 @@ export const getSlots = async (req, res) => {
 
         // Fetch parking slots for the given location_id
         const [slots] = await connection.query(
-            "SELECT * FROM ParkingSlots WHERE location_id = ?",
+            "SELECT slot_id, vehicle_type, is_empty FROM ParkingSlots WHERE location_id = ?",
             [location_id]
         );
 
-        res.status(200).json({ slots }); // Send response back to client
+        // Organize slots by type
+        const formattedSlots = {
+            twoWheeler: slots.filter(slot => slot.vehicle_type === "two-wheeler"),
+            fourWheeler: slots.filter(slot => slot.vehicle_type === "four-wheeler"),
+            bus: slots.filter(slot => slot.vehicle_type === "bus")
+        };
+
+        res.status(200).json({ 
+            location: { // Wrap in "location" to match frontend expectation
+                id: location_id,
+                name: rows[0].location_name, 
+                slots: formattedSlots
+            }
+        });
 
     } catch (err) {
         console.error("Database error:", err);
@@ -152,21 +164,93 @@ export const getSlots = async (req, res) => {
 };
 
 
+export const ReleaseSlot = async (req, res) => {
+    try {
+        const connection = db.promise();  // ✅ Use consistent DB connection
+        const { slotId } = req.body;
+
+        if (!slotId) {
+            return res.status(400).json({ error: "❌ slotId is required" });
+        }
+
+        console.log("🔹 Releasing Slot ID:", slotId); // Debugging log
+
+        const [result] = await connection.query(
+            "UPDATE ParkingSlots SET is_empty = 1 WHERE slot_id = ?",
+            [slotId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "❌ Slot not found or already empty" });
+        }
+
+        res.status(200).json({ message: "✅ Slot released successfully", slotId });
+    } catch (error) {
+        console.error("🔥 Error updating slot:", error);
+        res.status(500).json({ error: "❌ Server error while releasing slot" });
+    }
+};
+
 
 export const fetchAllLocations = async (req, res) => {
 
     try{
         const connection = db.promise();
-
         // Fetch all locations
         const [locations] = await connection.query(
             "SELECT * FROM Locations"
         );
 
-        res.status(200).json({ locations }); 
+        res.status(200).json({ 
+            locations }); 
 
     }catch(err){
         console.log("Database error",err);
         res.status(500).json({message:"Internal Server Error",error:err.message});
+    }
+};
+
+export const deleteLocation = async (req, res) => {
+    const { location_id } = req.params;
+
+    if (!location_id) {
+        return res.status(400).json({ message: "Invalid input data" });
+    }
+
+    try {
+        const connection = db.promise();
+        
+        await connection.query("START TRANSACTION");
+
+        // Check if location exists
+        const [rows] = await connection.query(
+            "SELECT location_id FROM Locations WHERE location_id = ?",
+            [location_id]
+        );
+
+        if (rows.length === 0) {
+            await connection.query("ROLLBACK");
+            return res.status(400).json({ message: "Invalid location_id" });
+        }
+
+        // Delete associated parking slots first to maintain referential integrity
+        await connection.query(
+            "DELETE FROM ParkingSlots WHERE location_id = ?",
+            [location_id]
+        );
+
+        // Delete the location
+        await connection.query(
+            "DELETE FROM Locations WHERE location_id = ?",
+            [location_id]
+        );
+
+        await connection.query("COMMIT");
+
+        res.status(200).json({ message: "Location and associated slots deleted successfully" });
+    } catch (err) {
+        await db.promise().query("ROLLBACK");
+        console.error("Database error:", err);
+        res.status(500).json({ message: "Internal Server Error", error: err.message });
     }
 };

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-const LocationCard = ({ id, image, name }) => {
+const AdminLocationCard = ({ id, image, name }) => {
   const navigate = useNavigate();
 
   return (
@@ -10,13 +10,13 @@ const LocationCard = ({ id, image, name }) => {
         src={image}
         alt={name}
         className="w-full h-36 object-cover rounded-lg cursor-pointer"
-        onClick={() => navigate(`/location/${id}`)}
+        onClick={() => navigate(`/admin/location/${id}`)}
       />
 
       {/* Clickable Location Name */}
       <h2
         className="text-lg font-semibold mt-2 cursor-pointer hover:text-blue-600"
-        onClick={() => navigate(`/location/${id}`)}
+        onClick={() => navigate(`/admin/location/${id}`)}
       >
         {name}
       </h2>
@@ -24,13 +24,13 @@ const LocationCard = ({ id, image, name }) => {
       {/* Action Buttons */}
       <div className="flex gap-2 mt-2">
         <button
-          onClick={() => navigate(`/location/${id}/edit`)} // 🔗 Navigate to edit page
+          onClick={() => navigate(`/admin/location/${id}/edit`)} // 🔗 Navigate to edit page
           className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600"
         >
           Edit Slots
         </button>
         <button
-          onClick={() => navigate(`/location/${id}/edit`)} // 🔗 Also navigate to edit page for deletion
+          onClick={() => navigate(`/admin/location/${id}/edit`)}
           className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600"
         >
           Delete Slots
@@ -40,4 +40,4 @@ const LocationCard = ({ id, image, name }) => {
   );
 };
 
-export default LocationCard;
+export default AdminLocationCard;

@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import db from './config/db.js'; // Importing the database connection
 import cookieParser from 'cookie-parser'; // For handling cookies
-import authRoutes from './routes/authRoutes.js'; // Import your auth routes
-import adminRoutes from './routes/adminRoutes.js'; // Import your admin routes
+import authRoutes from './routes/Auth/authRoutes.js'; // Import your auth routes
+import adminRoutes from './routes/Admin/adminRoutes.js'; // Import your admin routes
+import userRoutes from './routes/User/UserRoutes.js'; // Import your user routes
 
 dotenv.config();
 
@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 // Authentication Routes
 app.use('/auth', authRoutes);
 app.use('/admin',adminRoutes);
+app.use('/user', userRoutes);
 
 
 // Start the server
