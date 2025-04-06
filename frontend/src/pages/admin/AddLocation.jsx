@@ -28,7 +28,7 @@ const AddLocation = () => {
         }
       );
 
-      toast.success(`✅ Location "${locationName}" added successfully!`);
+      toast.success(` Location "${locationName}" added successfully!`);
 
       // Store in local storage or global state
       const newLocation = response.data;
@@ -39,10 +39,10 @@ const AddLocation = () => {
       setSlots({ twoWheeler: 0, fourWheeler: 0, bus: 0 });
 
       // Redirect to home
-      navigate("/home");
+      navigate("/admin/home");
     } catch (error) {
       console.error("Error adding location:", error);
-      toast.error("❌ Failed to add location. Please try again.");
+      toast.error("Failed to add location. Please try again.");
     }
   };
 
@@ -59,7 +59,7 @@ const AddLocation = () => {
 
       {/* Back Button (Top-Left) */}
       <button
-        onClick={() => navigate("/home")}
+        onClick={() => navigate("/admin/home")}
         className="absolute top-5 left-5 px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-600 transition-all"
       >
         🔙 Back to Home
@@ -68,7 +68,7 @@ const AddLocation = () => {
       {/* Form Container */}
       <div className="relative z-10 w-full  max-w-lg bg-white bg-opacity-10 backdrop-blur-md shadow-xl rounded-2xl p-8 border border-white/20">
         <h2 className="text-3xl font-bold text-white text-center mb-6">
-          🚗 Add Parking Location
+           Add Parking Location
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -84,7 +84,7 @@ const AddLocation = () => {
             />
 
             <label className="block text-white text-lg font-semibold">
-              📍 Location Name
+              Location Name
             </label>
             <input
               type="text"
@@ -98,9 +98,9 @@ const AddLocation = () => {
 
           {/* Slots Inputs */}
           {[
-            { type: "twoWheeler", label: "🛵 2-Wheeler Slots" },
-            { type: "fourWheeler", label: "🚗 4-Wheeler Slots" },
-            { type: "bus", label: "🚌 Bus Slots" },
+            { type: "twoWheeler", label: " 2-Wheeler Slots" },
+            { type: "fourWheeler", label: " 4-Wheeler Slots" },
+            { type: "bus", label: "Bus Slots" },
           ].map((slot) => (
             <div key={slot.type}>
               <label className="block text-white text-lg font-semibold">
@@ -124,7 +124,7 @@ const AddLocation = () => {
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg shadow-md hover:bg-blue-700 transform hover:scale-105 transition-all"
           >
-            ➕ Add Location
+             Add Location
           </button>
         </form>
       </div>

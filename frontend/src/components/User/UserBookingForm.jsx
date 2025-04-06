@@ -36,9 +36,9 @@ const UserBookingForm = ({
               className="w-full p-2 border rounded"
             >
               <option value="">Select Type</option>
-              <option value="TwoWheeler">2-Wheeler</option>
+              <option value="twoWheeler">2-Wheeler</option>
               <option value="FourWheeler">4-Wheeler</option>
-              <option value="Bus">Bus</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
