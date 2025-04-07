@@ -190,7 +190,7 @@ export const ReleaseSlot = async (req, res) => {
     const { slotId } = req.body;
 
     if (!slotId) {
-      return res.status(400).json({ error: "❌ slotId is required" });
+      return res.status(400).json({ error: " slotId is required" });
     }
 
     console.log("🔹 Releasing Slot ID:", slotId);
@@ -204,27 +204,27 @@ export const ReleaseSlot = async (req, res) => {
     if (slotUpdateResult.affectedRows === 0) {
       return res
         .status(404)
-        .json({ error: "❌ Slot not found or already empty" });
+        .json({ error: " Slot not found or already empty" });
     }
 
     // ✅ Step 2: Get full booking + user + vehicle + location info
     const [bookingRows] = await connection.query(
       `SELECT b.booking_id, b.vehicle_id, b.user_id, b.booking_time, b.end_time, b.status,
-                u.email, v.vehicle_number, v.vehicle_type, l.name AS location_name, l.address AS location_address
-         FROM Bookings b
-         JOIN Users u ON b.user_id = u.user_id
-         JOIN Vehicles v ON b.vehicle_id = v.vehicle_id
-         JOIN ParkingSlots ps ON b.slot_id = ps.slot_id
-         JOIN Locations l ON ps.location_id = l.location_id
-         WHERE b.slot_id = ? AND b.released = 0 AND (b.status = 'Active' OR b.status = 'Expired')
-         ORDER BY b.booking_time DESC LIMIT 1`,
+              u.email, v.vehicle_number, v.vehicle_type, l.location_name AS location_name
+       FROM Bookings b
+       JOIN Users u ON b.user_id = u.user_id
+       JOIN Vehicles v ON b.vehicle_id = v.vehicle_id
+       JOIN ParkingSlots ps ON b.slot_id = ps.slot_id
+       JOIN Locations l ON ps.location_id = l.location_id
+       WHERE b.slot_id = ? AND b.released = 0 AND (b.status = 'Active' OR b.status = 'Expired')
+       ORDER BY b.booking_time DESC LIMIT 1`,
       [slotId]
-    );
+    );    
 
     if (bookingRows.length === 0) {
       return res
         .status(404)
-        .json({ error: "❌ No active or expired booking found for this slot" });
+        .json({ error: " No active or expired booking found for this slot" });
     }
 
     const booking = bookingRows[0];
@@ -270,9 +270,9 @@ export const ReleaseSlot = async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("❌ Email error:", error);
+        console.error(" Email error:", error);
       } else {
-        console.log("✅ Email sent:", info.response);
+        console.log("Email sent:", info.response);
       }
     });
 
@@ -285,7 +285,7 @@ export const ReleaseSlot = async (req, res) => {
     });
   } catch (error) {
     console.error("🔥 Error releasing slot:", error);
-    res.status(500).json({ error: "❌ Server error while releasing slot" });
+    res.status(500).json({ error: "Server error while releasing slot" });
   }
 };
 
@@ -306,8 +306,10 @@ export const fetchAllLocations = async (req, res) => {
   }
 };
 
+// In your controller file
+// In your controller file
 export const deleteLocation = async (req, res) => {
-  const { location_id } = req.params;
+  const { location_id } = req.body; // ✅ Changed from req.params to req.body
 
   if (!location_id) {
     return res.status(400).json({ message: "Invalid input data" });
@@ -318,7 +320,6 @@ export const deleteLocation = async (req, res) => {
 
     await connection.query("START TRANSACTION");
 
-    // Check if location exists
     const [rows] = await connection.query(
       "SELECT location_id FROM Locations WHERE location_id = ?",
       [location_id]
@@ -329,26 +330,24 @@ export const deleteLocation = async (req, res) => {
       return res.status(400).json({ message: "Invalid location_id" });
     }
 
-    // Delete associated parking slots first to maintain referential integrity
     await connection.query("DELETE FROM ParkingSlots WHERE location_id = ?", [
       location_id,
     ]);
-
-    // Delete the location
     await connection.query("DELETE FROM Locations WHERE location_id = ?", [
       location_id,
     ]);
 
     await connection.query("COMMIT");
 
-    res
-      .status(200)
-      .json({ message: "Location and associated slots deleted successfully" });
+    res.status(200).json({
+      message: "Location and associated slots deleted successfully",
+    });
   } catch (err) {
     await db.promise().query("ROLLBACK");
     console.error("Database error:", err);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: err.message });
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 };

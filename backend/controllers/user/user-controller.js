@@ -2,54 +2,59 @@ import db from "../../config/db.js";
 
 // ✅ Get Slots for a Specific Location
 export const getSlots = (req, res) => {
-    const { location_id } = req.params;
+  const { location_id } = req.params;
 
-    if (!location_id) {
-        return res.status(400).json({ message: "Invalid input data" });
-    }
+  if (!location_id) {
+    return res.status(400).json({ message: "Invalid input data" });
+  }
 
-    db.query(
-        "SELECT location_id FROM Locations WHERE location_id = ?",
+  db.query(
+    "SELECT location_id FROM Locations WHERE location_id = ?",
+    [location_id],
+    (err, rows) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res
+          .status(500)
+          .json({ message: "Internal Server Error", error: err.message });
+      }
+      if (rows.length === 0) {
+        return res.status(400).json({ message: "Invalid location_id" });
+      }
+
+      db.query(
+        "SELECT * FROM ParkingSlots WHERE location_id = ?",
         [location_id],
-        (err, rows) => {
-            if (err) {
-                console.error("Database error:", err);
-                return res.status(500).json({ message: "Internal Server Error", error: err.message });
-            }
-            if (rows.length === 0) {
-                return res.status(400).json({ message: "Invalid location_id" });
-            }
-
-            db.query(
-                "SELECT * FROM ParkingSlots WHERE location_id = ?",
-                [location_id],
-                (err, slots) => {
-                    if (err) {
-                        console.error("Database error:", err);
-                        return res.status(500).json({ message: "Internal Server Error", error: err.message });
-                    }
-                    res.status(200).json({ slots });
-                }
-            );
+        (err, slots) => {
+          if (err) {
+            console.error("Database error:", err);
+            return res
+              .status(500)
+              .json({ message: "Internal Server Error", error: err.message });
+          }
+          res.status(200).json({ slots });
         }
-    );
+      );
+    }
+  );
 };
 
 // ✅ Get All Locations
 export const getAllLocations = (req, res) => {
-    db.query("SELECT * FROM Locations", (err, locations) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ message: "Internal Server Error", error: err.message });
-        }
-        res.status(200).json({ locations });
-    });
+  db.query("SELECT * FROM Locations", (err, locations) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res
+        .status(500)
+        .json({ message: "Internal Server Error", error: err.message });
+    }
+    res.status(200).json({ locations });
+  });
 };
 
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
-
 
 export const bookSlot = (req, res) => {
   const {
@@ -91,9 +96,7 @@ export const bookSlot = (req, res) => {
 
         if (!slot.length || !slot[0].is_empty) {
           db.rollback(() => {});
-          return res
-            .status(400)
-            .json({ message: "Slot is already occupied!" });
+          return res.status(400).json({ message: "Slot is already occupied!" });
         }
 
         db.query(
@@ -185,11 +188,33 @@ export const bookSlot = (req, res) => {
                           },
                         });
 
+                        // Convert datetime strings to readable format
+                        const formattedBookingTime = new Date(
+                          booking_time
+                        ).toLocaleString("en-US", {
+                          dateStyle: "full",
+                          timeStyle: "short",
+                        });
+
+                        const formattedEndTime = new Date(
+                          end_time
+                        ).toLocaleString("en-US", {
+                          dateStyle: "full",
+                          timeStyle: "short",
+                        });
+
                         const mailOptions = {
                           from: process.env.EMAIL_USER,
                           to: userEmail,
                           subject: "✅ Parking Slot Booked Successfully",
-                          text: `Your slot has been successfully booked!\n\nSlot ID: ${slot_id}\nVehicle Number: ${vehicle_number}\nBooking Start Time: ${booking_time}\nEnd Time: ${end_time}\n\nThank you for using our service.`,
+                          text: `Your slot has been successfully booked!
+
+                          Slot ID: ${slot_id}
+                          Vehicle Number: ${vehicle_number}
+                          Booking Start Time: ${formattedBookingTime}
+                          End Time: ${formattedEndTime}
+                                                  
+                          Thank you for using our service.`,
                         };
 
                         transporter.sendMail(mailOptions, (error, info) => {
@@ -217,67 +242,119 @@ export const bookSlot = (req, res) => {
   });
 };
 
-
 // ✅ Cancel Booking
 export const cancelBooking = (req, res) => {
-    const { booking_id } = req.body;
+  const { booking_id } = req.body;
 
-    if (!booking_id) {
-        return res.status(400).json({ message: "Booking ID is required" });
-    }
+  if (!booking_id) {
+    return res.status(400).json({ message: "Booking ID is required" });
+  }
 
-    db.beginTransaction((err) => {
-        if (err) return res.status(500).json({ message: "Transaction start failed", error: err.message });
+  db.beginTransaction((err) => {
+    if (err)
+      return res
+        .status(500)
+        .json({ message: "Transaction start failed", error: err.message });
 
-        // Check if booking exists
+    // Check if booking exists
+    db.query(
+      "SELECT slot_id FROM Bookings WHERE booking_id = ? AND status = 'Active'",
+      [booking_id],
+      (err, booking) => {
+        if (err) {
+          db.rollback(() => {});
+          return res
+            .status(500)
+            .json({ message: "Database Error", error: err.message });
+        }
+
+        if (!booking.length) {
+          db.rollback(() => {});
+          return res
+            .status(400)
+            .json({ message: "Invalid or inactive booking" });
+        }
+
+        const slot_id = booking[0].slot_id;
+
+        // Update booking status
         db.query(
-            "SELECT slot_id FROM Bookings WHERE booking_id = ? AND status = 'Active'",
-            [booking_id],
-            (err, booking) => {
-                if (err) {
-                    db.rollback(() => {});
-                    return res.status(500).json({ message: "Database Error", error: err.message });
-                }
-
-                if (!booking.length) {
-                    db.rollback(() => {});
-                    return res.status(400).json({ message: "Invalid or inactive booking" });
-                }
-
-                const slot_id = booking[0].slot_id;
-
-                // Update booking status
-                db.query(
-                    "UPDATE Bookings SET status = 'Cancelled' WHERE booking_id = ?",
-                    [booking_id],
-                    (err) => {
-                        if (err) {
-                            db.rollback(() => {});
-                            return res.status(500).json({ message: "Database Error", error: err.message });
-                        }
-
-                        // Mark slot as empty
-                        db.query(
-                            "UPDATE ParkingSlots SET is_empty = TRUE WHERE slot_id = ?",
-                            [slot_id],
-                            (err) => {
-                                if (err) {
-                                    db.rollback(() => {});
-                                    return res.status(500).json({ message: "Database Error", error: err.message });
-                                }
-
-                                db.commit((err) => {
-                                    if (err) {
-                                        db.rollback(() => {});
-                                        return res.status(500).json({ message: "Transaction commit failed", error: err.message });
-                                    }
-                                    res.status(200).json({ message: "Booking cancelled successfully" });
-                                });
-                            }
-                        );
-                    }
-                );
+          "UPDATE Bookings SET status = 'Cancelled' WHERE booking_id = ?",
+          [booking_id],
+          (err) => {
+            if (err) {
+              db.rollback(() => {});
+              return res
+                .status(500)
+                .json({ message: "Database Error", error: err.message });
             }
+
+            // Mark slot as empty
+            db.query(
+              "UPDATE ParkingSlots SET is_empty = TRUE WHERE slot_id = ?",
+              [slot_id],
+              (err) => {
+                if (err) {
+                  db.rollback(() => {});
+                  return res
+                    .status(500)
+                    .json({ message: "Database Error", error: err.message });
+                }
+
+                db.commit((err) => {
+                  if (err) {
+                    db.rollback(() => {});
+                    return res.status(500).json({
+                      message: "Transaction commit failed",
+                      error: err.message,
+                    });
+                  }
+                  res
+                    .status(200)
+                    .json({ message: "Booking cancelled successfully" });
+                });
+              }
+            );
+          }
         );
-    });
+      }
+    );
+  });
+};
+
+export const getUserBookings = async (req, res) => {
+  console.log("req.user:", req.user);
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID not found in request." });
+    }
+  try {
+    // Active bookings (not released)
+    const [currentBookings] = await db.query(
+      `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
+              b.booking_time, b.status
+       FROM bookings b
+       JOIN slots s ON b.slot_id = s.slot_id
+       JOIN locations l ON s.location_id = l.location_id
+       WHERE b.user_id = ? AND b.released = 0 AND b.status = 'Active'`,
+      [userId]
+    );
+
+    // Past bookings (released or completed/expired)
+    const [pastBookings] = await db.query(
+      `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
+              b.booking_time, b.end_time, b.status
+       FROM bookings b
+       JOIN slots s ON b.slot_id = s.slot_id
+       JOIN locations l ON s.location_id = l.location_id
+       WHERE b.user_id = ? AND (b.released = 1 OR b.status IN ('Completed', 'Expired'))`,
+      [userId]
+    );
+
+    res.json({ currentBookings, pastBookings });
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({ message: "Failed to fetch bookings" });
+  }
 };

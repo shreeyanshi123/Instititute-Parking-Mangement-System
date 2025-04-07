@@ -58,7 +58,7 @@ const LocationImageUpload = ({ imageFile, setImageFile, uploadedImageUrl, setUpl
     }
   };
 
-  console.log(uploadedImageUrl, "uploadedImageUrl");
+  
 
   // Upload image whenever imageFile changes
   useEffect(() => {

@@ -16,8 +16,11 @@ const UserBookingForm = ({
         </h2>
         <form onSubmit={handleBookingSubmit}>
           <div className="mb-2">
-            <label className="block font-semibold">Vehicle Number</label>
+            <label htmlFor="vehicle_number" className="block font-semibold">
+              Vehicle Number
+            </label>
             <input
+              id="vehicle_number"
               type="text"
               name="vehicle_number"
               value={bookingForm.vehicle_number}
@@ -26,9 +29,13 @@ const UserBookingForm = ({
               className="w-full p-2 border rounded"
             />
           </div>
+
           <div className="mb-2">
-            <label className="block font-semibold">Vehicle Type</label>
+            <label htmlFor="vehicle_type" className="block font-semibold">
+              Vehicle Type
+            </label>
             <select
+              id="vehicle_type"
               name="vehicle_type"
               value={bookingForm.vehicle_type}
               onChange={handleFormChange}
@@ -38,13 +45,16 @@ const UserBookingForm = ({
               <option value="">Select Type</option>
               <option value="twoWheeler">2-Wheeler</option>
               <option value="FourWheeler">4-Wheeler</option>
-              <option value="Other">Other</option>
+              <option value="Other">Bus</option>
             </select>
           </div>
 
           <div className="mb-2">
-            <label className="block font-semibold">Booking Time</label>
+            <label htmlFor="booking_time" className="block font-semibold">
+              Booking Time
+            </label>
             <input
+              id="booking_time"
               type="datetime-local"
               name="booking_time"
               value={bookingForm.booking_time}
@@ -53,17 +63,23 @@ const UserBookingForm = ({
               className="w-full p-2 border rounded"
             />
           </div>
+
           <div className="mb-2">
-            <label className="block font-semibold">End Time</label>
+            <label htmlFor="end_time" className="block font-semibold">
+              End Time
+            </label>
             <input
+              id="end_time"
               type="datetime-local"
               name="end_time"
               value={bookingForm.end_time}
+              min={bookingForm.booking_time} // Prevent selecting past booking time
               onChange={handleFormChange}
               required
               className="w-full p-2 border rounded"
             />
           </div>
+
           <div className="flex justify-between mt-4">
             <button
               type="submit"

@@ -28,7 +28,9 @@ const AdminHome = () => {
   };
 
   const handleDelete = (id) => {
-    console.log(`Deleting slots for location ID: ${id}`);
+    setLocation((prevLocations) =>
+      prevLocations.filter((location) => location.location_id !== id)
+    );
   };
 
   return (
@@ -60,8 +62,7 @@ const AdminHome = () => {
             id={locationElement.location_id}
             image={locationElement.image_url}
             name={locationElement.location_name}
-            onEdit={() => handleEdit(locationElement.location_id)}
-            onDelete={() => handleDelete(locationElement.location_id)}
+            onDelete={handleDelete}
           />
         ))}
       </div>

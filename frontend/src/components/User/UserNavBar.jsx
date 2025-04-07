@@ -29,7 +29,9 @@ const UserNavBar = () => {
               {/* Right Section (Profile & Add Slots) */}
               <div className="flex space-x-6 items-center">
                {/* History */}
-    
+                <Link to="/user/history" className="hidden sm:inline-flex text-white-300 hover:text-white">
+                  History
+                </Link>
                 {/* Profile Dropdown */}
                 <div className="relative">
                   <button onClick={() => setIsOpen(!isOpen)} className="flex items-center space-x-2">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
 import backgroundImage from "../../assets/cc3.png";
 import axios from "axios";
 
@@ -17,7 +18,7 @@ const AdminLocationDetails = () => {
         setLocation(response.data.location);
       } catch (error) {
         console.error("Error fetching location details:", error);
-        toast.error("❌ Failed to fetch location details. Please try again.");
+        toast.error(" Failed to fetch location details. Please try again.");
       }
     };
     fetchLocationDetails();
@@ -43,11 +44,11 @@ const AdminLocationDetails = () => {
           return { ...prev, slots: updatedSlots };
         });
 
-        toast.success(`🚗 Slot ${slot.slot_id} released successfully!`);
+        toast.success(` Slot ${slot.slot_id} released successfully!`);
       }
     } catch (error) {
       console.error("Error releasing slot:", error);
-      toast.error("❌ Failed to release slot. Try again.");
+      toast.error("Failed to release slot. Try again.");
     } finally {
       setLoadingSlots((prev) => ({ ...prev, [slotKey]: false })); // ✅ Stop loading
     }
@@ -83,7 +84,7 @@ const AdminLocationDetails = () => {
                   ? "2-Wheeler Slots"
                   : slotType === "fourWheeler"
                   ? "4-Wheeler Slots"
-                  : "🚌 Bus Slots"}
+                  : " Bus Slots"}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 {location.slots[slotType].map((slot, index) => {
@@ -146,6 +147,7 @@ const AdminLocationDetails = () => {
           ))}
         </div>
       </div>
+      <ToastContainer style={{ zIndex: 9999 }} />
     </div>
   );
 };

@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute"; // Import the n
 
 import UserHome from "./pages/user/UserHome";
 import GetUser from "./pages/user/GetUser";
+import UserHistory from "./pages/user/UserHistory";
 
 function App() {
   return (
@@ -83,6 +84,14 @@ function App() {
           element={
             // <ProtectedRoute>
             <GetUser />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="user/history"
+          element={
+            // <ProtectedRoute>
+            <UserHistory />
             // </ProtectedRoute>
           }
         />
