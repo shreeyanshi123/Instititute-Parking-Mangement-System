@@ -1,4 +1,7 @@
 import db from "../../config/db.js";
+import util from "util";
+db.query = util.promisify(db.query);
+
 
 // ✅ Get Slots for a Specific Location
 export const getSlots = (req, res) => {
@@ -324,7 +327,7 @@ export const cancelBooking = (req, res) => {
 
 export const getUserBookings = async (req, res) => {
   console.log("req.user:", req.user);
-    const userId = req.user?.user_id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(400).json({ message: "User ID not found in request." });
@@ -333,28 +336,34 @@ export const getUserBookings = async (req, res) => {
     // Active bookings (not released)
     const [currentBookings] = await db.query(
       `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
-              b.booking_time, b.status
+              b.booking_time, b.status, b.end_time , v.vehicle_number
        FROM bookings b
-       JOIN slots s ON b.slot_id = s.slot_id
+       JOIN parkingslots s ON b.slot_id = s.slot_id
        JOIN locations l ON s.location_id = l.location_id
-       WHERE b.user_id = ? AND b.released = 0 AND b.status = 'Active'`,
+       JOIN vehicles v ON b.vehicle_id = v.vehicle_id
+        WHERE b.user_id = ? AND b.released = 0 AND b.status = 'Active'`,
       [userId]
     );
-
+    
+    console.log("currentBookings:", currentBookings);
+    
     // Past bookings (released or completed/expired)
     const [pastBookings] = await db.query(
       `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
-              b.booking_time, b.end_time, b.status
+              b.booking_time, b.end_time, b.status, v.vehicle_number
        FROM bookings b
-       JOIN slots s ON b.slot_id = s.slot_id
-       JOIN locations l ON s.location_id = l.location_id
+       JOIN parkingslots s ON b.slot_id = s.slot_id
+       JOIN locations l ON s.location_id = l.location_id 
+      JOIN vehicles v ON b.vehicle_id = v.vehicle_id
        WHERE b.user_id = ? AND (b.released = 1 OR b.status IN ('Completed', 'Expired'))`,
       [userId]
     );
-
+    console.log("pastBookings:", pastBookings);
+    
     res.json({ currentBookings, pastBookings });
   } catch (err) {
     console.error("Error fetching bookings:", err);
+    console.error("Database Error", err.message);
     res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };
