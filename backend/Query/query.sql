@@ -55,19 +55,24 @@ CREATE TABLE Bookings (
     FOREIGN KEY (slot_id) REFERENCES ParkingSlots(slot_id) ON DELETE CASCADE
 );
 
+-- new queries
 
-ALTER TABLE parkingslots DROP COLUMN permanently_reserved
+ALTER TABLE parkingslots
+DROP COLUMN permanently_reserved
+ADD COLUMN reserved BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE permanent_reserve (
    reserve_id INT AUTO_INCREMENT PRIMARY KEY,
-   vehicle_id INT NOT NULL,
    slot_id INT NOT NULL, 
    user_id INT NOT NULL, 
    reserved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-   FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,  
    FOREIGN KEY (slot_id) REFERENCES parkingslots(slot_id) ON DELETE CASCADE,   
    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,  
    UNIQUE (slot_id), 
    UNIQUE (vehicle_id)
    );
-   
+
+
+-- Step 3: Add the new `vehicle_number` column
+ALTER TABLE permanent_reserve ADD COLUMN vehicle_number VARCHAR(20) NOT NULL;
+

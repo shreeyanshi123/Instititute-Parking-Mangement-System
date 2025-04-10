@@ -119,9 +119,9 @@ export const editLocation = async (req, res) => {
 
     // Insert new parking slot
     await connection.query(
-      `INSERT INTO ParkingSlots (location_id, vehicle_type, is_empty) 
+      `INSERT INTO ParkingSlots (location_id, vehicle_type, is_empty,reserved) 
              VALUES (?, ?, ?, ?)`,
-      [location_id, vehicle_type, true]
+      [location_id, vehicle_type, true, false]
     );
 
     res.status(201).json({ message: "Parking slot added successfully" });
@@ -130,55 +130,6 @@ export const editLocation = async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
-  }
-};
-
-export const getSlots = async (req, res) => {
-  const { location_id } = req.params;
-
-  if (!location_id) {
-    return res.status(400).json({ message: "Invalid input data" });
-  }
-
-  try {
-    const connection = db.promise();
-
-    // Fetch location name along with location_id
-    const [rows] = await connection.query(
-      "SELECT location_name FROM Locations WHERE location_id = ?",
-      [location_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(400).json({ message: "Invalid location_id" });
-    }
-
-    // Fetch parking slots for the given location_id
-    const [slots] = await connection.query(
-      "SELECT slot_id, vehicle_type, is_empty FROM ParkingSlots WHERE location_id = ?",
-      [location_id]
-    );
-
-    // Organize slots by type
-    const formattedSlots = {
-      twoWheeler: slots.filter((slot) => slot.vehicle_type === "two-wheeler"),
-      fourWheeler: slots.filter((slot) => slot.vehicle_type === "four-wheeler"),
-      bus: slots.filter((slot) => slot.vehicle_type === "bus"),
-    };
-
-    res.status(200).json({
-      location: {
-        // Wrap in "location" to match frontend expectation
-        id: location_id,
-        name: rows[0].location_name,
-        slots: formattedSlots,
-      },
-    });
-  } catch (err) {
-    console.error("Database error:", err);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 
@@ -206,7 +157,7 @@ export const ReleaseSlot = async (req, res) => {
         .status(404)
         .json({ error: " Slot not found or already empty" });
     }
-a
+    
     // ✅ Step 2: Get full booking + user + vehicle + location info
     const [bookingRows] = await connection.query(
       `SELECT b.booking_id, b.vehicle_id, b.user_id, b.booking_time, b.end_time, b.status,
@@ -219,7 +170,7 @@ a
        WHERE b.slot_id = ? AND b.released = 0 AND (b.status = 'Active' OR b.status = 'Expired')
        ORDER BY b.booking_time DESC LIMIT 1`,
       [slotId]
-    );    
+    );
 
     if (bookingRows.length === 0) {
       return res
@@ -307,7 +258,7 @@ export const fetchAllLocations = async (req, res) => {
 };
 
 // In your controller file
-// In your controller file
+
 export const deleteLocation = async (req, res) => {
   const { location_id } = req.body; // ✅ Changed from req.params to req.body
 
@@ -352,11 +303,158 @@ export const deleteLocation = async (req, res) => {
   }
 };
 
-export const reserveSlot = async (req, res) => {
-  
+export const getSlots = async (req, res) => {
+  const { location_id } = req.params;
+
+  if (!location_id) {
+    return res.status(400).json({ message: "Invalid input data" });
+  }
+
+  try {
+    const connection = db.promise();
+
+    // Fetch location name along with location_id
+    const [rows] = await connection.query(
+      "SELECT location_name FROM Locations WHERE location_id = ?",
+      [location_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Invalid location_id" });
+    }
+
+    // Fetch parking slots for the given location_id
+    const [slots] = await connection.query(
+      "SELECT slot_id, vehicle_type, is_empty,reserved FROM ParkingSlots WHERE location_id = ?",
+      [location_id]
+    );
+
+    // Organize slots by type
+    const formattedSlots = {
+      twoWheeler: slots.filter((slot) => slot.vehicle_type === "two-wheeler"),
+      fourWheeler: slots.filter((slot) => slot.vehicle_type === "four-wheeler"),
+      bus: slots.filter((slot) => slot.vehicle_type === "bus"),
+    };
+
+    res.status(200).json({
+      location: {
+        // Wrap in "location" to match frontend expectation
+        id: location_id,
+        name: rows[0].location_name,
+        slots: formattedSlots,
+      },
+    });
+  } catch (err) {
+    console.error("Database error:", err);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
+  }
 };
 
-// Unreserve a slot
+export const reserveSlot = async (req, res) => {
+  const { vehicle_number, slot_id } = req.body;
+  console.log(req.body, "req.body");
+
+  try {
+    const connection = db.promise();
+
+    // Ensure only admin can reserve
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admins can reserve slots" });
+    }
+
+    // Check if slot exists
+    const [slotRows] = await connection.query(
+      "SELECT slot_id FROM parkingslots WHERE slot_id = ?",
+      [slot_id]
+    );
+    console.log(slotRows, "slotRows");
+    if (slotRows.length === 0) {
+      return res.status(404).json({ message: "Slot not found" });
+    }
+
+    // Check if the slot is already reserved
+    const [existingSlot] = await connection.query(
+      "SELECT slot_id FROM permanent_reserve WHERE slot_id = ?",
+      [slot_id]
+    );
+    console.log(existingSlot, "existingSlot");
+    if (existingSlot.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Slot is already permanently reserved" });
+    }
+
+    // Check if the vehicle already has a reservation
+    const [existingVehicle] = await connection.query(
+      "SELECT vehicle_number FROM permanent_reserve WHERE vehicle_number = ?",
+      [vehicle_number]
+    );
+    console.log(existingVehicle, "existingVehicle");
+    if (existingVehicle.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Vehicle already has a permanent reservation" });
+    }
+
+    // Reserve the slot permanently
+    await connection.query(
+      "INSERT INTO permanent_reserve (vehicle_number, slot_id, user_id) VALUES (?, ?, ?)",
+      [vehicle_number, slot_id, req.user.id] // Assuming user_id is 39 for now, replace with actual user_id if needed
+    );
+
+    await connection.query(
+      "UPDATE parkingslots SET reserved = TRUE WHERE slot_id = ?",
+      [slot_id]
+    );
+
+    res.status(200).json({ message: "Slot permanently reserved successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 export const unreserveSlot = async (req, res) => {
-  
+  const { slot_id } = req.body;
+
+  try {
+    const connection = db.promise();
+
+    // Ensure only admin can unreserve
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Only admins can unreserve slots" });
+    }
+
+    // Check if the slot is reserved
+    const [existing] = await connection.query(
+      "SELECT * FROM permanent_reserve WHERE slot_id = ?",
+      [slot_id]
+    );
+
+    if (!existing.length) {
+      return res
+        .status(404)
+        .json({ message: "No permanent reservation found for this slot" });
+    }
+
+    // Delete the reservation
+    await connection.query("DELETE FROM permanent_reserve WHERE slot_id = ?", [
+      slot_id,
+    ]);
+
+    await connection.query(
+      "UPDATE parkingslots SET reserved = FALSE WHERE slot_id = ?",
+      [slot_id]
+    );
+
+    res.status(200).json({ message: "Slot unreserved successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };

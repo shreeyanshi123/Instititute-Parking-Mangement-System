@@ -353,7 +353,7 @@ export const getUserBookings = async (req, res) => {
               b.booking_time, b.end_time, b.status, v.vehicle_number
        FROM bookings b
        JOIN parkingslots s ON b.slot_id = s.slot_id
-       JOIN locations l ON s.location_id = l.location_id 
+       JOIN locations l ON s.location_id = l.location_id a
       JOIN vehicles v ON b.vehicle_id = v.vehicle_id
        WHERE b.user_id = ? AND (b.released = 1 OR b.status IN ('Completed', 'Expired'))`,
       [userId]

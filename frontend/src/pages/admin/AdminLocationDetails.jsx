@@ -560,35 +560,9 @@
 // export default AdminLocationDetails;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminNavbar from "../../components/Admin/AdminNavbar";
@@ -596,24 +570,20 @@ import AdminNavbar from "../../components/Admin/AdminNavbar";
 const AdminLocationDetails = () => {
   const { id } = useParams();
   const [location, setLocation] = useState(null);
-  const [vehicles, setVehicles] = useState({});
-  const [bookings, setBookings] = useState({});
-  const [loadingSlots, setLoadingSlots] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [modalData, setModalData] = useState(null);
-  const navigate = useNavigate();
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [slotId, setSlotId] = useState(null);
+  const [occupied, setOccupied] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [reserved, setReserved] = useState(false);
 
   useEffect(() => {
     const fetchLocationDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/admin/getSlots/${id}`);
+        const response = await axios.get(
+          `http://localhost:5000/admin/getSlots/${id}`
+        );
         setLocation(response.data.location);
-        setBookings(response.data.bookings || {});
-        const vehicleMap = {};
-        (response.data.vehicles || []).forEach(v => {
-          vehicleMap[v.vehicle_id] = v;
-        });
-        setVehicles(vehicleMap);
       } catch (error) {
         console.error("Error fetching location details:", error);
         toast.error("Failed to fetch location details. Please try again.");
@@ -622,97 +592,72 @@ const AdminLocationDetails = () => {
     fetchLocationDetails();
   }, [id]);
 
-  const handleSlotClick = (slotType, index) => {
-    const slotKey = `${slotType}-${index}`;
-    const booking = Object.values(bookings).find(
-      (b) => b.slot_id === slotKey && !b.released
-    );
-
-    if (booking) {
-      const vehicle = vehicles[booking.vehicle_id];
-      setModalData({
-        type: "occupied",
-        slotType,
-        index,
-        vehicle,
-        booking,
-      });
-    } else {
-      setModalData({
-        type: "unoccupied",
-        slotType,
-        index,
-      });
-    }
+  const handleSlotClick = (type, index) => {
+    const slot = location.slots[type][index];
+    setOccupied(!slot.is_empty);
+    setReserved(slot.reserved);
+    setSlotId(slot.slot_id);
+    setSelectedSlot(slot);
     setShowModal(true);
   };
 
-  const handleReleaseVehicle = async (slotType, index) => {
-    const slot = location.slots[slotType][index];
-    const slotKey = `${slotType}-${index}`;
-    setLoadingSlots((prev) => ({ ...prev, [slotKey]: true }));
-
+  const handleReleaseVehicle = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/admin/releaseSlot", {
-        slotId: slot.slot_id,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/admin/releaseSlot",
+        {
+          slotId: slotId,
+        }
+      );
 
       if (response.status === 200) {
-        setLocation((prev) => {
-          const updatedSlots = { ...prev.slots };
-          updatedSlots[slotType][index] = {
-            ...updatedSlots[slotType][index],
-            occupied: false,
-          };
-          return { ...prev, slots: updatedSlots };
-        });
-
-        toast.success(`Slot ${slot.slot_id} released successfully!`);
+        toast.success(`Slot released successfully!`);
         setShowModal(false);
       }
     } catch (error) {
       console.error("Error releasing slot:", error);
       toast.error("Failed to release slot. Try again.");
-    } finally {
-      setLoadingSlots((prev) => ({ ...prev, [slotKey]: false }));
     }
   };
 
-  const handleReserve = async (slotType, index) => {
-    const vehicleNumber = document.getElementById("vehicleNumber")?.value.trim();
-    const vehicleType = document.getElementById("vehicleType")?.value;
-
-    if (!vehicleNumber || !vehicleType) {
+  const handleReserve = async (vehicle_number, slotid) => {
+    if (!vehicle_number || !slotid) {
       toast.warn("Please provide valid vehicle details.");
       return;
     }
 
-    const slot = location.slots[slotType][index];
-    const slotKey = `${slotType}-${index}`;
-    setLoadingSlots((prev) => ({ ...prev, [slotKey]: true }));
-
     try {
-      const response = await axios.post("http://localhost:5000/admin/reserveSlot", {
-        slotId: slot.slot_id,
-        vehicleNumber,
-        vehicleType,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/admin/reserveSlot",
+        {
+          slot_id: slotid,
+          vehicle_number: vehicle_number,
+        }
+      );
 
       if (response.status === 200) {
-        setLocation((prev) => {
-          const updatedSlots = { ...prev.slots };
-          updatedSlots[slotType][index].occupied = true;
-          return { ...prev, slots: updatedSlots };
-        });
-
         toast.success("Slot reserved successfully!");
         setShowModal(false);
       }
     } catch (error) {
       console.error("Error reserving slot:", error);
       toast.error("Reservation failed. Try again.");
-    } finally {
-      setLoadingSlots((prev) => ({ ...prev, [slotKey]: false }));
+    }
+  };
+
+  const handleUnreserve = async (slotId) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/admin/unreserveSlot",
+        { slot_id :slotId }
+      );
+      if (response.status === 200) {
+        toast.success("Slot unreserved successfully!");
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error("Error unreserving slot:", error);
+      toast.error("Failed to unreserve slot.");
     }
   };
 
@@ -738,35 +683,42 @@ const AdminLocationDetails = () => {
             {["twoWheeler", "fourWheeler", "bus"].map((type, i) => (
               <div className="flex flex-col items-center text-center" key={i}>
                 <h2 className="text-xl font-semibold mb-4 text-white">
-                  {type === "twoWheeler" ? "🛵 2-Wheeler" : type === "fourWheeler" ? "🚗 4-Wheeler" : "🚌 Bus"}
+                  {type === "twoWheeler"
+                    ? "🛵 2-Wheeler"
+                    : type === "fourWheeler"
+                    ? "🚗 4-Wheeler"
+                    : "🚌 Bus"}
                 </h2>
                 <div
                   className={`grid ${
-                    type === "bus" ? "grid-cols-3" : type === "fourWheeler" ? "grid-cols-4" : "grid-cols-5"
+                    type === "bus"
+                      ? "grid-cols-3"
+                      : type === "fourWheeler"
+                      ? "grid-cols-4"
+                      : "grid-cols-5"
                   } gap-3`}
                 >
-                  {location.slots[type]?.map((slot, index) => {
-                    const slotKey = `${type}-${index}`;
-                    return (
-                      <div
-                        key={index}
-                        onClick={() => handleSlotClick(type, index)}
-                        className={`${
-                          type === "bus"
-                            ? "w-20 h-[115px]"
-                            : type === "fourWheeler"
-                            ? "w-12 h-[65px]"
-                            : "w-9 h-14"
-                        } flex items-center justify-center rounded-md text-sm font-bold text-white shadow-md transition-all cursor-pointer ${
-                          slot.occupied
-                            ? "bg-red-300 hover:bg-red-400"
-                            : "bg-green-600 hover:bg-green-400"
-                        }`}
-                      >
-                        {slot.occupied ? "O" : "UO"}
-                      </div>
-                    );
-                  })}
+                  {location.slots[type]?.map((slot, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleSlotClick(type, index)}
+                      className={`${
+                        type === "bus"
+                          ? "w-20 h-[115px]"
+                          : type === "fourWheeler"
+                          ? "w-12 h-[65px]"
+                          : "w-9 h-14"
+                      } flex items-center justify-center rounded-md text-sm font-bold text-white shadow-md transition-all cursor-pointer ${
+                        !slot.is_empty
+                          ? "bg-red-300 hover:bg-red-400"
+                          : slot.reserved
+                          ? "bg-yellow-300 hover:bg-yellow-400"
+                          : "bg-green-600 hover:bg-green-400"
+                      }`}
+                    >
+                      {!slot.is_empty ? "O" : slot.reserved ? "R" : "UO"}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -774,12 +726,12 @@ const AdminLocationDetails = () => {
         </div>
       </div>
 
-      {showModal && modalData && (
+      {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-[350px] text-black space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">
-                {modalData.type === "occupied" ? "Vehicle Details" : "Reserve Slot"}
+                {occupied ? "Vehicle Details" : "Reserve Slot"}
               </h2>
               <button
                 className="ml-auto bg-gray-200 text-gray-700 text-xl rounded-md w-8 h-8 flex items-center justify-center"
@@ -789,45 +741,51 @@ const AdminLocationDetails = () => {
               </button>
             </div>
 
-            {modalData.type === "occupied" ? (
+            {occupied ? (
               <>
                 <p>
-                  <strong>Number:</strong> {modalData.vehicle?.vehicle_number}
+                  <strong>Number:</strong> UP32AB1234
                 </p>
                 <p>
-                  <strong>Type:</strong> {modalData.vehicle?.vehicle_type}
+                  <strong>Type:</strong> Car
                 </p>
                 <p>
-                  <strong>Booking Time:</strong> {modalData.booking?.booking_time}
+                  <strong>Booking Time:</strong> 10:00 AM
                 </p>
                 <p>
-                  <strong>End Time:</strong> {modalData.booking?.end_time}
+                  <strong>End Time:</strong> 1:00 PM
                 </p>
                 <button
-                  onClick={() => handleReleaseVehicle(modalData.slotType, modalData.index)}
-                  className="px-4 py-2 bg-red-500 text-white rounded"
+                  onClick={() => handleReleaseVehicle(slotId)}
+                  className="mt-4 w-full py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Release
+                </button>
+              </>
+            ) : reserved ? (
+              <>
+                <p className="mb-4">
+                  <strong>This slot is reserved.</strong>
+                </p>
+                <button
+                  onClick={() => handleUnreserve(slotId)}
+                  className="w-full py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  Unreserve
                 </button>
               </>
             ) : (
               <>
                 <input
                   type="text"
-                  placeholder="Vehicle Number"
-                  className="w-full border px-2 py-1 rounded"
-                  id="vehicleNumber"
+                  placeholder="Enter Vehicle Number"
+                  value={vehicleNumber}
+                  onChange={(e) => setVehicleNumber(e.target.value)}
+                  className="w-full px-3 py-2 border rounded mb-4"
                 />
-                <select id="vehicleType" className="w-full border px-2 py-1 rounded">
-                  <option value="">Select Vehicle Type</option>
-                  <option value="twoWheeler">2-Wheeler</option>
-                  <option value="fourWheeler">4-Wheeler</option>
-                  <option value="bus">Bus</option>
-                  <option value="other">Other</option>
-                </select>
                 <button
-                  onClick={() => handleReserve(modalData.slotType, modalData.index)}
-                  className="px-4 py-2 bg-green-600 text-white rounded"
+                  onClick={() => handleReserve(vehicleNumber, slotId)}
+                  className="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
                   Reserve
                 </button>
@@ -837,6 +795,12 @@ const AdminLocationDetails = () => {
         </div>
       )}
 
+      <button
+        className="mt-4 w-full py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
+        onClick={() => setShowModal(false)}
+      >
+        Cancel
+      </button>
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
