@@ -119,9 +119,9 @@ export const editLocation = async (req, res) => {
 
     // Insert new parking slot
     await connection.query(
-      `INSERT INTO ParkingSlots (location_id, vehicle_type, is_empty, permanently_reserved) 
+      `INSERT INTO ParkingSlots (location_id, vehicle_type, is_empty) 
              VALUES (?, ?, ?, ?)`,
-      [location_id, vehicle_type, true, false]
+      [location_id, vehicle_type, true]
     );
 
     res.status(201).json({ message: "Parking slot added successfully" });
@@ -206,7 +206,7 @@ export const ReleaseSlot = async (req, res) => {
         .status(404)
         .json({ error: " Slot not found or already empty" });
     }
-
+a
     // ✅ Step 2: Get full booking + user + vehicle + location info
     const [bookingRows] = await connection.query(
       `SELECT b.booking_id, b.vehicle_id, b.user_id, b.booking_time, b.end_time, b.status,
@@ -350,4 +350,13 @@ export const deleteLocation = async (req, res) => {
       error: err.message,
     });
   }
+};
+
+export const reserveSlot = async (req, res) => {
+  
+};
+
+// Unreserve a slot
+export const unreserveSlot = async (req, res) => {
+  
 };

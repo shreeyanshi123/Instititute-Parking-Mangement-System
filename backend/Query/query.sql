@@ -56,3 +56,18 @@ CREATE TABLE Bookings (
 );
 
 
+ALTER TABLE parkingslots DROP COLUMN permanently_reserved
+
+CREATE TABLE permanent_reserve (
+   reserve_id INT AUTO_INCREMENT PRIMARY KEY,
+   vehicle_id INT NOT NULL,
+   slot_id INT NOT NULL, 
+   user_id INT NOT NULL, 
+   reserved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+   FOREIGN KEY (vehicle_id) REFERENCES vehicles(vehicle_id) ON DELETE CASCADE,  
+   FOREIGN KEY (slot_id) REFERENCES parkingslots(slot_id) ON DELETE CASCADE,   
+   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,  
+   UNIQUE (slot_id), 
+   UNIQUE (vehicle_id)
+   );
+   
