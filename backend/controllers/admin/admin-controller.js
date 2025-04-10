@@ -458,3 +458,38 @@ export const unreserveSlot = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const getDetails = async (req, res) => {
+  const { slotId } = req.body;
+
+  try {
+    const connection = db.promise();
+    const [rows] = await connection.query(
+      `
+      SELECT 
+        b.booking_id,b.booking_time,b.end_time,b.status,v.vehicle_number,v.vehicle_type,
+        u.name AS user_name,
+        u.email,
+        u.phone_number
+      FROM bookings b
+      JOIN vehicles v ON b.vehicle_id = v.vehicle_id
+      JOIN users u ON v.user_id = u.user_id
+      WHERE b.slot_id = ? 
+        AND b.status = 'Active' 
+        AND b.released = 0
+      ORDER BY b.booking_time DESC
+      LIMIT 1
+      `,
+      [slotId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "No active booking found for this slot." });
+    }
+
+    res.status(200).json({ slotDetails: rows[0] });
+  } catch (err) {
+    console.error("Error fetching slot details:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
