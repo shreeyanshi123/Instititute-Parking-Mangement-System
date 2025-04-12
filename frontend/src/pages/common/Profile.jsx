@@ -1,24 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "axios";
+
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [user, setUser] = useState({
-    name: "abcd",
-    email: "abcd@example.com",
-    role: "abcd",
-  });
-  const [newUsername, setNewUsername] = useState(user.name);
-  const [newEmail, setNewEmail] = useState(user.email);
+  const [user, setUser] = useState(null);
+  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleLogout = () => {
-    toast.success("Logged out successfully!");
-    navigate("/auth/login");
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/auth/getUser", { withCredentials: true })
+      .then((response) => {
+        console.log(response.data); // Debugging
+        if (response.data.success) {
+          setUser(response.data.user); // Save only the user data
+          setNewUsername(response.data.user.name);
+          setNewEmail(response.data.user.email);
+        } else {
+          setError(response.data.message);
+        }
+      })
+      .catch((err) => setError("Error fetching user",err));
+  }, []);
+
+
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("http://localhost:5000/auth/logout", {}, { withCredentials: true });
+      toast.success("Logged out successfully!", { position: "top-right" });
+      navigate("/auth/login");
+    } catch (error) {
+      console.error("Logout Error:", error);
+      toast.error("Failed to logout. Please try again.", { position: "top-right" });
+    }
   };
 
   const handleSaveChanges = () => {
@@ -43,7 +76,7 @@ const Profile = () => {
         <p className="text-gray-500">{user.role}</p>
 
         <nav className="mt-6 space-y-2 w-full text-center">
-          <Link to="/home" className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
+          <Link to={user.role === "admin" ? "/admin/home" : "/user/home"}   className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
           <a href="#" className="block py-2 text-gray-600 hover:text-blue-600">Parking Logs</a>
           <button onClick={() => setShowChangePassword(true)} className="block w-full py-2 text-gray-600 hover:text-blue-600">Change Password</button>
         </nav>
@@ -56,6 +89,7 @@ const Profile = () => {
           <p className="text-lg"><strong>Name:</strong> {user.name} </p>
           <p className="text-lg"><strong>Email:</strong> {user.email}</p>
           <p className="text-lg"><strong>Role:</strong> {user.role}</p>
+          <p className="text-lg"><strong>Phone:</strong> {user.phone_number}</p>
         </div>
 
         <div className="mt-6 space-x-4">

@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser'; // For handling cookies
 import authRoutes from './routes/Auth/authRoutes.js'; // Import your auth routes
 import adminRoutes from './routes/Admin/adminRoutes.js'; // Import your admin routes
 import userRoutes from './routes/User/UserRoutes.js'; // Import your user routes
-
+import profileRouter from './routes/common/profile-route.js';
 dotenv.config();
 
 const app = express();
@@ -31,6 +31,7 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/admin',adminRoutes);
 app.use('/user', userRoutes);
+app.use('/profile',profileRouter);
 
 
 // Start the server
