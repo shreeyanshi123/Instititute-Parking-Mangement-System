@@ -452,6 +452,13 @@ export const unreserveSlot = async (req, res) => {
       [slot_id]
     );
 
+    await connection.query(
+      `UPDATE bookings 
+       SET released = TRUE, status = 'Expired' 
+       WHERE slot_id = ? AND status = 'Reserved' AND released = FALSE`,
+      [slot_id]
+    );
+
     res.status(200).json({ message: "Slot unreserved successfully" });
   } catch (err) {
     console.error(err);

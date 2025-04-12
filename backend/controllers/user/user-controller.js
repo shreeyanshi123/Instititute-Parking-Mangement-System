@@ -2,7 +2,6 @@ import db from "../../config/db.js";
 import util from "util";
 db.query = util.promisify(db.query);
 
-
 // ✅ Get Slots for a Specific Location
 export const getSlots = (req, res) => {
   const { location_id } = req.params;
@@ -51,7 +50,7 @@ export const getAllLocations = (req, res) => {
         .status(500)
         .json({ message: "Internal Server Error", error: err.message });
     }
-    res.status(200).json({ locations });
+    res.status(200).json({ locations, role: req.user.role });
   });
 };
 
@@ -136,8 +135,8 @@ export const bookSlot = (req, res) => {
 
         function insertBooking(vehicle_id) {
           db.query(
-            "INSERT INTO Bookings (user_id, vehicle_id, slot_id, booking_time, end_time, status) VALUES (?, ?, ?, ?, ?, 'Active')",
-            [user_id, vehicle_id, slot_id, booking_time, end_time],
+            "INSERT INTO Bookings (user_id, vehicle_id, slot_id, booking_time, end_time, status,is_confirmed) VALUES (?, ?, ?, ?, ?, 'Active',?)",
+            [user_id, vehicle_id, slot_id, booking_time, end_time, true],
             (err, booking) => {
               if (err) {
                 db.rollback(() => {});
@@ -327,43 +326,43 @@ export const cancelBooking = (req, res) => {
 
 export const getUserBookings = async (req, res) => {
   console.log("req.user:", req.user);
-    const userId = req.user?.id;
+  const userId = req.user?.id;
 
-    if (!userId) {
-      return res.status(400).json({ message: "User ID not found in request." });
-    }
+  if (!userId) {
+    return res.status(400).json({ message: "User ID not found in request." });
+  }
+
   try {
-    // Active bookings (not released)
-    const [currentBookings] = await db.query(
-      `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
-              b.booking_time, b.status, b.end_time , v.vehicle_number
-       FROM bookings b
-       JOIN parkingslots s ON b.slot_id = s.slot_id
-       JOIN locations l ON s.location_id = l.location_id
-       JOIN vehicles v ON b.vehicle_id = v.vehicle_id
-        WHERE b.user_id = ? AND b.released = 0 AND b.status = 'Active'`,
+    const connection = db.promise();
+
+    // Categorize bookings on backend
+    const [allBookings] = await connection.query(
+      `SELECT b.*, ps.location_id, l.location_name, v.vehicle_number 
+   FROM bookings b
+   JOIN parkingslots ps ON b.slot_id = ps.slot_id
+   JOIN locations l ON ps.location_id = l.location_id
+   JOIN vehicles v ON b.vehicle_id = v.vehicle_id
+   WHERE b.user_id = ? ORDER BY b.booking_time DESC`,
       [userId]
     );
-    
-    console.log("currentBookings:", currentBookings);
-    
-    // Past bookings (released or completed/expired)
-    const [pastBookings] = await db.query(
-      `SELECT b.booking_id, b.vehicle_id, b.slot_id, l.location_name,
-              b.booking_time, b.end_time, b.status, v.vehicle_number
-       FROM bookings b
-       JOIN parkingslots s ON b.slot_id = s.slot_id
-       JOIN locations l ON s.location_id = l.location_id a
-      JOIN vehicles v ON b.vehicle_id = v.vehicle_id
-       WHERE b.user_id = ? AND (b.released = 1 OR b.status IN ('Completed', 'Expired'))`,
-      [userId]
-    );
-    console.log("pastBookings:", pastBookings);
-    
-    res.json({ currentBookings, pastBookings });
+
+    const currentBookings = [];
+    const pastBookings = [];
+    const reservedBookings = [];
+
+    for (let booking of allBookings) {
+      if (booking.status === "Reserved" && !booking.released) {
+        reservedBookings.push(booking);
+      } else if (!booking.released && booking.status !== "Reserved") {
+        currentBookings.push(booking);
+      } else {
+        pastBookings.push(booking);
+      }
+    }
+
+    res.status(200).json({ currentBookings, pastBookings, reservedBookings });
   } catch (err) {
     console.error("Error fetching bookings:", err);
-    console.error("Database Error", err.message);
     res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };
