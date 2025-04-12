@@ -58,7 +58,7 @@ CREATE TABLE Bookings (
 -- new queries
 
 ALTER TABLE parkingslots
-DROP COLUMN permanently_reserved
+DROP COLUMN permanently_reserved,
 ADD COLUMN reserved BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE permanent_reserve (

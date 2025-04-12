@@ -1,108 +1,65 @@
 import db from "../../config/db.js";
-import nodemailer from "nodemailer";
-import twilio from "twilio";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+dotenv.config();
 
-dotenv.config(); // Make sure to load the environment variables
-
-const twilioSID = process.env.TWILIO_ACCOUNT_SID;
-const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-const emailUser = process.env.EMAIL_USER;
-const emailPass = process.env.EMAIL_PASS;
-const twilioPhoneNUmber = process.env.TWILIO_PHONE_NUMBER;
-
-// Store OTPs temporarily (for simplicity, using Map)
-const otpStore = new Map();
-
-// OTP Generator
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000);
-
-// Send OTP Email
-const sendEmailOTP = async (email, otp) => {
-    const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-            user: emailUser,
-            pass: emailPass,
-        },
-    });
-
-    await transporter.sendMail({
-        from: emailUser,
-        to: email,
-        subject: 'Your OTP Code',
-        text: `Your OTP is ${otp}. It will expire in 5 minutes.`,
-    });
-};
-
-// Send OTP SMS (via Twilio)
-const client = new twilio(twilioSID, twilioAuthToken);
-
-const sendPhoneOTP = async (phoneNumber, otp) => {
-    const formattedPhone = phoneNumber.startsWith('+')
-        ? phoneNumber.trim()
-        : `+91${phoneNumber.trim()}`;
-
-    try {
-        await client.messages.create({
-            body: `Your OTP is ${otp}. It will expire in 5 minutes.`,
-            from: twilioPhoneNUmber,
-            to: formattedPhone,
-        });
-    } catch (error) {
-        console.error('Error sending OTP via SMS:', error.message);
-    }
-};
-
-
-
-
-
-
-
-// Profile Update Handler
 export const updateProfile = async (req, res) => {
-    const { userId } = req.params;
-    const { type, value } = req.body;
+  const { userId } = req.params;
+  const { name, email } = req.body;
 
-    try {
-        if (type === 'name') {
-            await db.query('UPDATE users SET name = ? WHERE id = ?', [value, userId]);
-            return res.json({ message: 'Name updated successfully' });
-        }
+  if (!name && !email) {
+    return res.status(400).json({ message: "No fields to update" });
+  }
 
-        if (type === 'email') {
-            const otp = generateOTP();
-            otpStore.set(userId, { otp, email: value, expires: Date.now() + 5 * 60 * 1000 });
+  try {
+    const result = await db.query(
+      `UPDATE users SET name = ?, email = ? WHERE user_id = ?`,
+      [name || null, email || null, userId]
+    );
 
-            await sendEmailOTP(value, otp);
-            return res.json({ message: 'OTP sent to new email. Please verify to update.' });
-        }
-
-        return res.status(400).json({ message: 'Invalid update type' });
-    } catch (err) {
-        res.status(500).send(err.message);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found or no changes made." });
     }
+
+    return res.status(200).json({ message: "Profile updated successfully!" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to update profile." });
+  }
 };
 
-// Email Verification Handler
-export const verifyEmailChange = async (req, res) => {
-    const { userId } = req.params;
-    const { otp } = req.body;
 
-    const stored = otpStore.get(userId);
+export const updatePassword = async (req, res) => {
+  const { id, oldPassword, newPassword } = req.body;
+ 
 
-    if (!stored) return res.status(400).json({ message: 'No OTP found. Try again.' });
+  if (!id || !oldPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Missing fields' });
+  }
 
-    if (Date.now() > stored.expires)
-        return res.status(400).json({ message: 'OTP expired. Request a new one.' });
+  try {
+    // Fetch user from the database
+    const [user] = await db.query('SELECT * FROM Users WHERE user_id = ?', [id]);
+    // console.log(user);
+    if (user.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
-    if (stored.otp != otp)
-        return res.status(400).json({ message: 'Invalid OTP' });
+    // Check if old password matches
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) {
+      return res.status(400).json({ success: false, message: 'Incorrect old password' });
+    }
 
-    // OTP matches, update email
-    await db.query('UPDATE users SET email = ? WHERE id = ?', [stored.email, userId]);
-    otpStore.delete(userId);
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    res.json({ message: 'Email updated successfully' });
+    // Update the password in the database
+    await db.query('UPDATE Users SET password = ? WHERE user_id = ?', [hashedPassword, id]);
+
+    return res.status(200).json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: 'An error occurred' });
+  }
 };

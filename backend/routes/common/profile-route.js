@@ -1,11 +1,9 @@
 import express from 'express';
-import { authMiddleware } from '../../controllers/auth/auth-controller.js';
-import { updateProfile,verifyEmailChange } from '../../controllers/common/profile-controller.js';
+import { updateProfile,updatePassword } from '../../controllers/common/profile-controller.js';
 const router = express.Router();
 
 
-router.post('/update/:userId', updateProfile);
-
-router.post('/verify-email/:userId', verifyEmailChange);
+router.put('/update/:userId', updateProfile);
+router.put('/updatePassword', updatePassword); // Assuming you have a function to update password
 
 export default router;

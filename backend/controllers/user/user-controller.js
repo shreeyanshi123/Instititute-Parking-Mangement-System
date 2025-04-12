@@ -90,14 +90,14 @@ export const bookSlot = (req, res) => {
       [slot_id],
       (err, slot) => {
         if (err) {
-          db.rollback(() => {});
+          db.rollback(() => { });
           return res
             .status(500)
             .json({ message: "Database Error", error: err.message });
         }
 
         if (!slot.length || !slot[0].is_empty) {
-          db.rollback(() => {});
+          db.rollback(() => { });
           return res.status(400).json({ message: "Slot is already occupied!" });
         }
 
@@ -106,7 +106,7 @@ export const bookSlot = (req, res) => {
           [vehicle_number],
           (err, vehicle) => {
             if (err) {
-              db.rollback(() => {});
+              db.rollback(() => { });
               return res
                 .status(500)
                 .json({ message: "Database Error", error: err.message });
@@ -118,7 +118,7 @@ export const bookSlot = (req, res) => {
                 [user_id, vehicle_number, vehicle_type],
                 (err, result) => {
                   if (err) {
-                    db.rollback(() => {});
+                    db.rollback(() => { });
                     return res.status(500).json({
                       message: "Database Error",
                       error: err.message,
@@ -139,7 +139,7 @@ export const bookSlot = (req, res) => {
             [user_id, vehicle_id, slot_id, booking_time, end_time, true],
             (err, booking) => {
               if (err) {
-                db.rollback(() => {});
+                db.rollback(() => { });
                 return res.status(500).json({
                   message: "Database Error",
                   error: err.message,
@@ -151,7 +151,7 @@ export const bookSlot = (req, res) => {
                 [slot_id],
                 (err) => {
                   if (err) {
-                    db.rollback(() => {});
+                    db.rollback(() => { });
                     return res.status(500).json({
                       message: "Database Error",
                       error: err.message,
@@ -163,7 +163,7 @@ export const bookSlot = (req, res) => {
                     [user_id],
                     (err, userRows) => {
                       if (err || userRows.length === 0) {
-                        db.rollback(() => {});
+                        db.rollback(() => { });
                         return res.status(500).json({
                           message: "User email fetch failed",
                           error: err?.message,
@@ -174,7 +174,7 @@ export const bookSlot = (req, res) => {
 
                       db.commit((err) => {
                         if (err) {
-                          db.rollback(() => {});
+                          db.rollback(() => { });
                           return res.status(500).json({
                             message: "Transaction commit failed",
                             error: err.message,
@@ -264,14 +264,14 @@ export const cancelBooking = (req, res) => {
       [booking_id],
       (err, booking) => {
         if (err) {
-          db.rollback(() => {});
+          db.rollback(() => { });
           return res
             .status(500)
             .json({ message: "Database Error", error: err.message });
         }
 
         if (!booking.length) {
-          db.rollback(() => {});
+          db.rollback(() => { });
           return res
             .status(400)
             .json({ message: "Invalid or inactive booking" });
@@ -285,7 +285,7 @@ export const cancelBooking = (req, res) => {
           [booking_id],
           (err) => {
             if (err) {
-              db.rollback(() => {});
+              db.rollback(() => { });
               return res
                 .status(500)
                 .json({ message: "Database Error", error: err.message });
@@ -297,7 +297,7 @@ export const cancelBooking = (req, res) => {
               [slot_id],
               (err) => {
                 if (err) {
-                  db.rollback(() => {});
+                  db.rollback(() => { });
                   return res
                     .status(500)
                     .json({ message: "Database Error", error: err.message });
@@ -305,7 +305,7 @@ export const cancelBooking = (req, res) => {
 
                 db.commit((err) => {
                   if (err) {
-                    db.rollback(() => {});
+                    db.rollback(() => { });
                     return res.status(500).json({
                       message: "Transaction commit failed",
                       error: err.message,

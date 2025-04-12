@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 
 
 const Profile = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const [id, setId] = useState('');
+
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otp, setOtp] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [user, setUser] = useState(null);
@@ -25,11 +30,12 @@ const Profile = () => {
           setUser(response.data.user); // Save only the user data
           setNewUsername(response.data.user.name);
           setNewEmail(response.data.user.email);
+          setId(response.data.user.user_id);
         } else {
           setError(response.data.message);
         }
       })
-      .catch((err) => setError("Error fetching user",err));
+      .catch((err) => setError("Error fetching user", err));
   }, []);
 
 
@@ -54,16 +60,72 @@ const Profile = () => {
     }
   };
 
-  const handleSaveChanges = () => {
-    setUser({ ...user, name: newUsername, email: newEmail });
-    toast.success("Profile updated successfully!");
-    setShowEditModal(false);
+  const handleSaveChanges = async () => {
+    const updates = {};
+
+    // Check if there's any change in username or email
+    updates.name = newUsername;
+    updates.email = newEmail;
+
+    // If no changes were made, show a toast and return early
+    if (Object.keys(updates).length === 0) {
+      toast.info("No changes made.");
+      return;
+    }
+
+    try {
+      // Update the user profile
+      const response = await axios.put(
+        `http://localhost:5000/profile/update/${id}`,
+        updates,  // Send name and email directly
+        { withCredentials: true }
+      );
+
+      // Update the user state with the new values
+      setUser((prev) => ({ ...prev, ...updates }));
+
+      toast.success("Profile updated successfully!");
+      setShowEditModal(false);  // Close the modal
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update profile.");
+    }
   };
 
-  const handleChangePassword = () => {
-    toast.success("Password changed successfully!");
-    setShowChangePassword(false);
+
+  const handleChangePassword = async () => {
+    try {
+      const updatePasswordResponse = await axios.put('http://localhost:5000/profile/updatePassword', {
+        id,
+        oldPassword,
+        newPassword,
+      });
+  
+      const { success, message } = updatePasswordResponse.data;
+  
+      if (success) {
+        toast.success("Password changed successfully!");
+        setShowChangePassword(false);
+        setOldPassword("");
+        setNewPassword("");
+      } else {
+        toast.error(message || "Failed to change password.");
+      }
+  
+    } catch (error) {
+      console.error(error);
+  
+      // Backend might return error messages in the response
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+        setOldPassword("");
+        setNewPassword("");
+      } else {
+        toast.error("An error occurred while changing the password.");
+      }
+    }
   };
+  
 
   return (
     <div className="min-h-screen flex bg-gray-100">
@@ -76,7 +138,7 @@ const Profile = () => {
         <p className="text-gray-500">{user.role}</p>
 
         <nav className="mt-6 space-y-2 w-full text-center">
-          <Link to={user.role === "admin" ? "/admin/home" : "/user/home"}   className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
+          <Link to={user.role === "admin" ? "/admin/home" : "/user/home"} className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
           <a href="#" className="block py-2 text-gray-600 hover:text-blue-600">Parking Logs</a>
           <button onClick={() => setShowChangePassword(true)} className="block w-full py-2 text-gray-600 hover:text-blue-600">Change Password</button>
         </nav>
@@ -135,6 +197,7 @@ const Profile = () => {
           </div>
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
