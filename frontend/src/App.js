@@ -12,11 +12,13 @@ import AdminLocationDetails from "./pages/admin/AdminLocationDetails";
 import EditLocation from "./pages/admin/EditLocation";
 import AdminHome from "./pages/admin/AdminHome";
 import UserLocationDetails from "./pages/user/UserLocationDetails";
-import ProtectedRoute from "./components/common/ProtectedRoute"; // Import the new component
+
 
 import UserHome from "./pages/user/UserHome";
 import GetUser from "./pages/user/GetUser";
 import UserHistory from "./pages/user/UserHistory";
+import VisitorLocationDetails from "./pages/user/VisitorLocationDetails"
+import VisitorNotifications from "./pages/user/VisitorNotifications";
 
 function App() {
   return (
@@ -103,6 +105,18 @@ function App() {
             // </ProtectedRoute>
           }
         />
+        <Route
+          path="visitor/location/:id"
+          element={
+            // <ProtectedRoute>
+            <VisitorLocationDetails />
+            // </ProtectedRoute>
+          }
+        />
+        <Route path="/visitor/notifications" 
+        element={<VisitorNotifications />} 
+        />
+
       </Routes>
     </Router>
   );

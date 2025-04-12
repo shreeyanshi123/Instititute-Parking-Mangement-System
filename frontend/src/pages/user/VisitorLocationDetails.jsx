@@ -4,34 +4,18 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import backgroundImage from "../../assets/cc3.png";
 import axios from "axios";
-import UserBookingForm from "../../components/User/UserBookingForm";
+import VisitorBookingForm from "../../components/User/VisitorBookingForm";
 
-const UserLocationDetails = () => {
+const VisitorLocationDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [location, setLocation] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [user, setUser] = useState(null);
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [bookingForm, setBookingForm] = useState({
     vehicle_number: "",
-    vehicle_type: "twoWheeler", // 🛠 Consistent with slot_type
-    booking_time: "",
-    end_time: "",
+    vehicle_type: "twoWheeler",
   });
-
-  const fetchUser = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/auth/getUser", {
-        withCredentials: true, // ✅ Include cookies
-      });
-
-      setUser(response.data.user); // response.data.user, not just data
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      toast.error("Unauthorized. Please login again.");
-    }
-  };
 
   const fetchLocationDetails = async () => {
     try {
@@ -41,33 +25,36 @@ const UserLocationDetails = () => {
       setLocation(response.data.location);
     } catch (error) {
       console.error("Error fetching location details:", error);
-      toast.error(" Failed to fetch location details. Please try again.");
+      toast.error("Failed to fetch location details. Please try again.");
     }
   };
 
   useEffect(() => {
     fetchLocationDetails();
-    fetchUser();
   }, [id]);
 
   useEffect(() => {
     if (shouldRefetch) {
-      fetchLocationDetails();
-      setShouldRefetch(false);
+      const timer = setTimeout(() => {
+        fetchLocationDetails();
+        setShouldRefetch(false);
+      }, 300); // wait for 300ms to ensure backend update reflects
+  
+      return () => clearTimeout(timer);
     }
   }, [shouldRefetch]);
+  
 
   const handleSlotClick = (slot) => {
-    if (!slot.is_empty) {
-      toast.warn(" Slot is already occupied!");
+    if (!slot.is_empty || slot.reserved) {
+      toast.warn("Slot is already occupied or reserved!");
       return;
     }
 
-    // Normalize vehicle_type to match bookingForm.vehicle_type
     let slotType = slot.vehicle_type;
 
     if (slotType.toLowerCase().includes("bus")) {
-      slotType = "Other"; // match ENUM value for bus
+      slotType = "Other";
     } else if (slotType.toLowerCase().includes("four")) {
       slotType = "FourWheeler";
     } else if (slotType.toLowerCase().includes("two")) {
@@ -84,33 +71,17 @@ const UserLocationDetails = () => {
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
 
-    if (!user || !selectedSlot) {
-      toast.warn("Missing user or slot information.");
+    if (!selectedSlot) {
+      toast.warn("Please select a slot first.");
       return;
     }
-
-    const expectedType = selectedSlot?.slot_type; // normalized to ENUM values
+    console.log("selectedSlot", selectedSlot);
+    const expectedType = selectedSlot?.slot_type;
     const selectedType = bookingForm?.vehicle_type;
 
     if (expectedType !== selectedType) {
       toast.warning("Selected slot type doesn't match your vehicle type.");
-      return;
-    }
 
-    console.log("Expected Type:", expectedType);
-    console.log("Selected Type:", selectedType);
-
-    if (!expectedType || !selectedType) {
-      toast.warn("Slot type or vehicle type is not defined properly.");
-      return;
-    }
-
-    if (expectedType !== selectedType) {
-      toast.warn(
-        ` Selected slot ${expectedType}, you chose ${selectedType}.select correct vehicle type.`
-      );
-
-      // Delay form closure and reset
       setTimeout(() => {
         setSelectedSlot(null);
         setBookingForm({
@@ -119,41 +90,43 @@ const UserLocationDetails = () => {
           booking_time: "",
           end_time: "",
         });
-      }, 100); // 100ms delay is enough
+      }, 100);
 
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/user/bookSlot", {
-        user_id: user.user_id,
-        slot_id: selectedSlot.slot_id,
-        vehicle_number: bookingForm.vehicle_number,
-        vehicle_type: bookingForm.vehicle_type,
-        booking_time: bookingForm.booking_time,
-        end_time: bookingForm.end_time,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/visitor/bookSlot",
+        {
+          slotId: selectedSlot.slot_id,
+          vehicleNumber: bookingForm.vehicle_number,
+          vehicleType: bookingForm.vehicle_type,
+        }
+      );
 
       if (
         response.status === 200 ||
         response.status === 201 ||
         response.data.success
       ) {
-        toast.success(" Booking Successful!");
+        toast.success("Visitor slot booked successfully!");
         setBookingForm({
           vehicle_number: "",
           vehicle_type: "twoWheeler",
-          booking_time: "",
-          end_time: "",
         });
         setSelectedSlot(null);
         setShouldRefetch(true);
       } else {
-        toast.error(" Booking failed. Try again.");
+        toast.error("Booking failed. Please try again.");
       }
-    } catch (error) {
-      console.error("Booking error:", error);
-      toast.error(" Booking Failed. Try again.");
+    } catch (err) {
+      if (err.response && err.response.status === 409) {
+        toast.warn("This slot is already reserved by another visitor.");
+      } else {
+        toast.error("Something went wrong while booking the slot.");
+      }
+      console.error("Visitor booking error:", err);
     }
   };
 
@@ -194,23 +167,24 @@ const UserLocationDetails = () => {
                   ? "2-Wheeler Slots"
                   : slotType === "fourWheeler"
                   ? "4-Wheeler Slots"
-                  : " Bus Slots"}
+                  : "Bus Slots"}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 {location.slots?.[slotType]?.map((slot, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg text-center font-semibold cursor-pointer transition-colors duration-300 ${
-                      slot.reserved
-                      ? "bg-yellow-500 hover:bg-yellow-400"
-                      : slot.is_empty
-                      ? "bg-green-500 hover:bg-green-400"
-                      : "bg-red-500 hover:bg-red-400"
+                        slot.reserved
+                        ? "bg-yellow-500 hover:bg-yellow-400"
+                        : slot.is_empty
+                        ? "bg-green-500 hover:bg-green-400"
+                        : "bg-red-500 hover:bg-red-400"
+                      
                     } text-white shadow-md`}
                     onClick={() => handleSlotClick(slot)}
                   >
                     {slot.slot_id} <br />
-                    {!slot.is_empty ? "Occupied" : "Empty"}
+                    {!slot.is_empty || slot.reserved ? "Occupied" : "Empty"}
                   </div>
                 )) || <p>No slots available</p>}
               </div>
@@ -220,7 +194,7 @@ const UserLocationDetails = () => {
 
         {/* Booking Form Modal */}
         {selectedSlot && (
-          <UserBookingForm
+          <VisitorBookingForm
             selectedSlot={selectedSlot}
             bookingForm={bookingForm}
             handleFormChange={handleFormChange}
@@ -234,4 +208,4 @@ const UserLocationDetails = () => {
   );
 };
 
-export default UserLocationDetails;
+export default VisitorLocationDetails;

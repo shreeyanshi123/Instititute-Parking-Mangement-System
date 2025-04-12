@@ -76,3 +76,8 @@ CREATE TABLE permanent_reserve (
 -- Step 3: Add the new `vehicle_number` column
 ALTER TABLE permanent_reserve ADD COLUMN vehicle_number VARCHAR(20) NOT NULL;
 
+ALTER TABLE bookings
+ADD COLUMN is_confirmed BOOLEAN DEFAULT 0;
+
+ALTER TABLE bookings 
+MODIFY COLUMN status ENUM('Active', 'Completed', 'Expired', 'Reserved','Cancelled') DEFAULT 'Active';
