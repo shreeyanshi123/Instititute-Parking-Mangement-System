@@ -15,3 +15,30 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+.add-location{
+  min-height: 100vh;
+  background-color: #ece4db;
+}
+
+.add-location-card{
+  min-height: 120%;
+  background-color: #374151;
+}
+
+.location-card{
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, filter 0.3s ease;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.location-card:hover{
+  transform: scale(1.1); 
+  filter: brightness(1.1);
+}
+
+.homePage{
+  background-color: #F1EFEC; 
+}

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import Toastify CSS
 import axios from "axios";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const AdminLocationCard = ({ id, image, name, onDelete }) => {
   const navigate = useNavigate();
@@ -25,30 +26,33 @@ const AdminLocationCard = ({ id, image, name, onDelete }) => {
       <img
         src={image}
         alt={name}
-        className="w-full h-36 object-cover rounded-lg cursor-pointer"
+        className="w-full h-44 object-cover rounded-lg cursor-pointer"  
         onClick={() => navigate(`/admin/location/${id}`)}
       />
-      <h2
-        className="text-lg font-semibold mt-2 cursor-pointer hover:text-blue-600"
-        onClick={() => navigate(`/admin/location/${id}`)}
-      >
-        {name}
-      </h2>
-
-      <div className="flex gap-2 mt-2">
-        <button
-          onClick={() => navigate(`/admin/location/${id}/edit`)}
-          className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600"
-        >
-          Edit Slots
-        </button>
-        <button
-          onClick={handleDelete}
-          className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600"
-        >
-          Delete Slots
-        </button>
-      </div>
+      <div className="flex items-center justify-between w-full mt-2 p-4">
+                {/* Location Name */}
+                <h2
+                  className="text-xl font-semibold text-gray-800 cursor-pointer hover:text-blue-600"
+                  style={{fontSize:"25px"}}
+                  onClick={() => navigate(`/admin/location/${id}`)}
+                >
+                  {name}
+                </h2>
+      
+                {/* Action Icons */}
+                <div className="flex gap-3 text-xl">
+                  <FaEdit
+                    onClick={() => navigate(`/admin/location/${id}/edit`)}
+                    className="cursor-pointer text-blue-600 hover:text-blue-800"
+                    title="Edit Slots"
+                  />
+                  <FaTrash
+                    onClick={handleDelete}
+                    className="cursor-pointer text-red-600 hover:text-red-800"
+                    title="Delete Slots"
+                  />
+              </div>
+          </div>
       <ToastContainer style={{ zIndex: 9999 }} />
     </div>
   );

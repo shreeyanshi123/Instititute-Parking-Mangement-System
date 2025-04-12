@@ -57,7 +57,7 @@ function App() {
           }
         />
         <Route
-          path="/location/:id/edit"
+          path="/admin/location/:id/edit"
           element={
             // <ProtectedRoute>
             <EditLocation />

@@ -62,6 +62,7 @@ const AdminHome = () => {
             id={locationElement.location_id}
             image={locationElement.image_url}
             name={locationElement.location_name}
+            onEdit={() => handleEdit(locationElement.location_id)}
             onDelete={handleDelete}
           />
         ))}
@@ -71,3 +72,6 @@ const AdminHome = () => {
 };
 
 export default AdminHome;
+
+
+
