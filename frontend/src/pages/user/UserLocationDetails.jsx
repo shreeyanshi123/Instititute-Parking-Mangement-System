@@ -58,8 +58,8 @@ const UserLocationDetails = () => {
   }, [shouldRefetch]);
 
   const handleSlotClick = (slot) => {
-    if (!slot.is_empty) {
-      toast.warn(" Slot is already occupied!");
+    if (!slot.is_empty || slot.reserved) {
+      toast.warn("Slot is not available!");
       return;
     }
 
