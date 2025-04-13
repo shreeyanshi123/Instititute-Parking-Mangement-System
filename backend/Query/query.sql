@@ -69,7 +69,6 @@ CREATE TABLE permanent_reserve (
    FOREIGN KEY (slot_id) REFERENCES parkingslots(slot_id) ON DELETE CASCADE,   
    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,  
    UNIQUE (slot_id), 
-   UNIQUE (vehicle_id)
    );
 
 

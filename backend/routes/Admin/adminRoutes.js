@@ -1,6 +1,7 @@
 import express from "express";
-import {addLocation, deleteLocation, editLocation, fetchAllLocations, getDetails, getSlots, handleImageUpload, ReleaseSlot,reserveSlot,unreserveSlot} from "../../controllers/admin/admin-controller.js"
+import {addLocation, deleteLocation, editLocation, fetchAllLocations, getAllBookings, getDetails, getSlots, getUsersOverview, handleImageUpload, ReleaseSlot,reserveSlot,unreserveSlot} from "../../controllers/admin/admin-controller.js"
 const router=express.Router();
+
 import {upload}  from "../../helpers/cloudinary.js"
 import {authMiddleware} from "../../controllers/auth/auth-controller.js"
 
@@ -16,5 +17,9 @@ router.post('/reserveSlot',authMiddleware,reserveSlot);
 router.post('/unreserveSlot',authMiddleware,unreserveSlot);
 router.post('/getDetails',getDetails);
 
+
+
+router.get('/users/overview', getUsersOverview);
+router.get('/bookings',getAllBookings);
 
 export default router;

@@ -100,9 +100,9 @@ const Profile = () => {
         oldPassword,
         newPassword,
       });
-  
+
       const { success, message } = updatePasswordResponse.data;
-  
+
       if (success) {
         toast.success("Password changed successfully!");
         setShowChangePassword(false);
@@ -111,10 +111,10 @@ const Profile = () => {
       } else {
         toast.error(message || "Failed to change password.");
       }
-  
+
     } catch (error) {
       console.error(error);
-  
+
       // Backend might return error messages in the response
       if (error.response && error.response.data && error.response.data.message) {
         toast.error(error.response.data.message);
@@ -125,7 +125,7 @@ const Profile = () => {
       }
     }
   };
-  
+
 
   return (
     <div className="min-h-screen flex bg-gray-100">
@@ -139,7 +139,13 @@ const Profile = () => {
 
         <nav className="mt-6 space-y-2 w-full text-center">
           <Link to={user.role === "admin" ? "/admin/home" : "/user/home"} className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
-          <a href="#" className="block py-2 text-gray-600 hover:text-blue-600">Parking Logs</a>
+          <Link
+            to={user.role === "admin" ? "/admin/history" : "/user/history"}
+            className="block py-2 text-gray-600 hover:text-blue-600"
+          >
+            {user.role === "admin" ? "Bookings History" : "Past Bookings"}
+          </Link>
+
           <button onClick={() => setShowChangePassword(true)} className="block w-full py-2 text-gray-600 hover:text-blue-600">Change Password</button>
         </nav>
       </aside>

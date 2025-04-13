@@ -157,7 +157,7 @@ export const ReleaseSlot = async (req, res) => {
         .status(404)
         .json({ error: " Slot not found or already empty" });
     }
-    
+
     // ✅ Step 2: Get full booking + user + vehicle + location info
     const [bookingRows] = await connection.query(
       `SELECT b.booking_id, b.vehicle_id, b.user_id, b.booking_time, b.end_time, b.status,
@@ -500,3 +500,72 @@ export const getDetails = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+
+export const getUsersOverview = async (req, res) => {
+  const query = `
+    SELECT 
+      u.name,
+      COUNT(b.booking_id) AS total_bookings,
+      SUM(CASE WHEN b.status = 'Active' THEN 1 ELSE 0 END) AS current_bookings
+    FROM Users u
+    LEFT JOIN Bookings b ON u.user_id = b.user_id
+    GROUP BY u.user_id, u.name;
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching user overview:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.status(200).json(results);
+  });
+}
+
+import moment from 'moment';
+export const getAllBookings = async (req, res) => {
+  const query = `
+    SELECT 
+      l.location_name AS location,
+      ps.slot_id AS slot,
+      u.name AS user,
+      b.booking_time AS start,
+      b.end_time AS end,
+      b.status,
+      v.vehicle_number AS vehicle
+    FROM Bookings b
+    LEFT JOIN Users u ON b.user_id = u.user_id
+    LEFT JOIN Vehicles v ON b.vehicle_id = v.vehicle_id
+    LEFT JOIN ParkingSlots ps ON b.slot_id = ps.slot_id
+    LEFT JOIN Locations l ON ps.location_id = l.location_id
+    WHERE b.end_time < NOW()  -- Fetch only past bookings
+    ORDER BY b.end_time DESC;
+  `;
+
+  try {
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("Error fetching past bookings:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+
+      // Format the response to match the required format
+      const formattedResults = results.map((booking) => {
+        return {
+          location: booking.location,
+          slot: booking.slot,
+          user: booking.user,
+          start: moment(booking.start).format('M/D/YY, h:mm A'),  // Format start time
+          end: moment(booking.end).format('M/D/YY, h:mm A'),      // Format end time
+          status: booking.status,
+          vehicle: booking.vehicle,
+        };
+      });
+
+      res.status(200).json(formattedResults);
+    });
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

@@ -29,6 +29,7 @@ const AdminNavbar = () => {
 
           {/* Right Section (Profile & Add Slots) */}
           <div className="flex space-x-6 items-center">
+          <Link to="/admin/history" className="hover:text-blue-400">Bookings History</Link>
             <Link to="/admin/addlocation" className="hover:text-blue-400">➕ Add Location</Link>
 
             {/* Profile Dropdown */}

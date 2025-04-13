@@ -19,6 +19,7 @@ import GetUser from "./pages/user/GetUser";
 import UserHistory from "./pages/user/UserHistory";
 import VisitorLocationDetails from "./pages/user/VisitorLocationDetails"
 import VisitorNotifications from "./pages/user/VisitorNotifications";
+import AdminHistory from "./pages/admin/AdminHistory";
 
 function App() {
   return (
@@ -69,6 +70,14 @@ function App() {
           element={
             // <ProtectedRoute>
             <AdminHome />
+            // </ProtectedRoute>
+          }
+        />
+         <Route
+          path="admin/history"
+          element={
+            // <ProtectedRoute>
+            <AdminHistory />
             // </ProtectedRoute>
           }
         />
