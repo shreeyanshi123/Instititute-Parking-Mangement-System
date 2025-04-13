@@ -505,6 +505,7 @@ export const getDetails = async (req, res) => {
 export const getUsersOverview = async (req, res) => {
   const query = `
     SELECT 
+      u.user_id,
       u.name,
       COUNT(b.booking_id) AS total_bookings,
       SUM(CASE WHEN b.status = 'Active' THEN 1 ELSE 0 END) AS current_bookings
@@ -569,3 +570,46 @@ export const getAllBookings = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+export const getAdminUser=async(req,res)=>{
+  const {userId} = req.params;
+
+  if (!userId) {
+    return res.status(400).json({ message: "User ID not found in request." });
+  }
+
+  try {
+    const connection = db.promise();
+
+    // Categorize bookings on backend
+    const [allBookings] = await connection.query(
+      `SELECT b.*, ps.location_id, l.location_name, v.vehicle_number 
+   FROM bookings b
+   JOIN parkingslots ps ON b.slot_id = ps.slot_id
+   JOIN locations l ON ps.location_id = l.location_id
+   JOIN vehicles v ON b.vehicle_id = v.vehicle_id
+   WHERE b.user_id = ? ORDER BY b.booking_time DESC`,
+      [userId]
+    );
+
+    const currentBookings = [];
+    const pastBookings = [];
+    const reservedBookings = [];
+
+    for (let booking of allBookings) {
+      if (booking.status === "Reserved" && !booking.released) {
+        reservedBookings.push(booking);
+      } else if (!booking.released && booking.status !== "Reserved") {
+        currentBookings.push(booking);
+      } else {
+        pastBookings.push(booking);
+      }
+    }
+
+    res.status(200).json({ currentBookings, pastBookings, reservedBookings });
+  } catch (err) {
+    console.error("Error fetching bookings:", err);
+    res.status(500).json({ message: "Failed to fetch bookings" });
+  }
+}

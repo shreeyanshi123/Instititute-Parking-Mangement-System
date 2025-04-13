@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import AdminNavbar from "../../components/Admin/AdminNavbar";
-import { Link } from "react-router-dom";
 import axios from "axios";
-
-
+import { Link } from "react-router-dom";  // Import Link component
 
 const AdminHistory = () => {
   const [search, setSearch] = useState("");
@@ -12,6 +10,7 @@ const AdminHistory = () => {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [error, setError] = useState(null);
   const [bookings, setBookings] = useState([]);
+
   // Fetch bookings data
   useEffect(() => {
     const fetchBookingsOverview = async () => {
@@ -72,8 +71,9 @@ const AdminHistory = () => {
               <h3 className="font-medium">{user.name}</h3>
               <p>Total Bookings: {user.total_bookings}</p>
               <p>Current Bookings: {user.current_bookings}</p>
+              {/* Link to AdminUserHistory */}
               <Link
-               to={ `/admin/user/${user.id}`}
+                to={`/admin/user/${user.user_id}`} // Use the userId to navigate
                 className="text-blue-600 hover:underline text-sm"
               >
                 View History
@@ -86,14 +86,14 @@ const AdminHistory = () => {
         <div className="w-full md:w-3/4 p-6 bg-white">
           <h1 className="text-2xl font-bold mb-4">📋 All Past Bookings</h1>
 
-          {/* Search Bar
+          {/* Search Bar */}
           <input
             type="text"
             placeholder="Search by user, vehicle, or location"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full p-2 mb-4 border rounded shadow-sm"
-          /> */}
+          />
 
           {/* Scrollable Table */}
           <div className="overflow-auto max-h-[400px] border rounded shadow">

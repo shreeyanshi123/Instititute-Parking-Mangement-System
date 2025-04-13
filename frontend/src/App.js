@@ -20,6 +20,7 @@ import UserHistory from "./pages/user/UserHistory";
 import VisitorLocationDetails from "./pages/user/VisitorLocationDetails"
 import VisitorNotifications from "./pages/user/VisitorNotifications";
 import AdminHistory from "./pages/admin/AdminHistory";
+import AdminUserHistory from "./pages/admin/AdminUserHistory";
 
 function App() {
   return (
@@ -78,6 +79,14 @@ function App() {
           element={
             // <ProtectedRoute>
             <AdminHistory />
+            // </ProtectedRoute>
+          }
+        />
+         <Route
+          path="admin/user/:userId"
+          element={
+            // <ProtectedRoute>
+            <AdminUserHistory />
             // </ProtectedRoute>
           }
         />
