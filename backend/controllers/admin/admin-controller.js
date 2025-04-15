@@ -95,43 +95,164 @@ export const addLocation = async (req, res) => {
   }
 };
 
-export const editLocation = async (req, res) => {
-  const { location_id } = req.params;
-  const { vehicle_type } = req.body;
-  console.log(location_id);
-  console.log(req.params);
-  if (!location_id || !vehicle_type) {
-    return res.status(400).json({ message: "Invalid input data" });
+
+
+export const fetchLocation = async (req, res) => {
+  const locationId = req.params.id;
+
+  if (!locationId || isNaN(locationId)) {
+    return res.status(400).json({ message: "Invalid location ID" });
   }
 
   try {
     const connection = db.promise();
 
-    // Check if location_id exists
-    const [rows] = await connection.query(
-      "SELECT location_id FROM Locations WHERE location_id = ?",
-      [location_id]
+    // Fetch location details
+    const [locationRows] = await connection.query(
+      "SELECT * FROM Locations WHERE location_id = ?",
+      [locationId]
     );
 
-    if (rows.length === 0) {
-      return res.status(400).json({ message: "Invalid location_id" });
+    if (locationRows.length === 0) {
+      return res.status(404).json({ message: "Location not found" });
     }
 
-    // Insert new parking slot
-    await connection.query(
-      `INSERT INTO ParkingSlots (location_id, vehicle_type, is_empty,reserved) 
-             VALUES (?, ?, ?, ?)`,
-      [location_id, vehicle_type, true, false]
+    const location = locationRows[0];
+
+    // Fetch all slots related to the location
+    const [slotRows] = await connection.query(
+      "SELECT vehicle_type, is_empty FROM ParkingSlots WHERE location_id = ?",
+      [locationId]
     );
 
-    res.status(201).json({ message: "Parking slot added successfully" });
-  } catch (err) {
-    console.error("Database error:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: err.message });
+    // Group slots by vehicle type
+    const groupedSlots = {
+      twoWheeler: [],
+      fourWheeler: [],
+      bus: [],
+    };
+
+    slotRows.forEach((slot) => {
+      const occupied = !slot.is_empty;
+
+      if (slot.vehicle_type === "two-wheeler") {
+        groupedSlots.twoWheeler.push({ occupied });
+      } else if (slot.vehicle_type === "four-wheeler") {
+        groupedSlots.fourWheeler.push({ occupied });
+      } else if (slot.vehicle_type === "bus") {
+        groupedSlots.bus.push({ occupied });
+      }
+    });
+
+    // Construct final response object
+    const response = {
+      id: location.location_id,
+      name: location.location_name,
+      imageUrl: location.image_url,
+      slots: groupedSlots,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error in fetchLocation:", error);
+    res.status(500).json({ message: "Error fetching location", error: error.message });
   }
 };
+
+
+
+
+
+
+
+
+
+export const editLocation = async (req, res) => {
+  const { id } = req.params;
+  const { locationName, slots } = req.body;
+
+  if (!locationName || !slots) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const conn = db.promise();
+
+    // Start transaction
+    await conn.query("START TRANSACTION");
+
+    // 1. Fetch existing slot counts from Locations table
+    const [locationRows] = await conn.query(
+      `SELECT two_wheeler_slots, four_wheeler_slots, bus_parking_slots 
+       FROM Locations 
+       WHERE location_id = ?`,
+      [id]
+    );
+
+    if (locationRows.length === 0) {
+      throw new Error("Location not found");
+    }
+
+    const current = locationRows[0];
+
+    // 2. Update location name and new slot counts
+    await conn.query(
+      `UPDATE Locations 
+       SET location_name = ?, 
+           two_wheeler_slots = ?, 
+           four_wheeler_slots = ?, 
+           bus_parking_slots = ?
+       WHERE location_id = ?`,
+      [
+        locationName,
+        Math.max(current.two_wheeler_slots, slots.twoWheeler),
+        Math.max(current.four_wheeler_slots, slots.fourWheeler),
+        Math.max(current.bus_parking_slots, slots.bus),
+        id
+      ]
+    );
+
+    // 3. Insert extra empty slots if increased
+    const vehicleTypes = {
+      "two-wheeler": {
+        newCount: slots.twoWheeler,
+        currentCount: current.two_wheeler_slots
+      },
+      "four-wheeler": {
+        newCount: slots.fourWheeler,
+        currentCount: current.four_wheeler_slots
+      },
+      "bus": {
+        newCount: slots.bus,
+        currentCount: current.bus_parking_slots
+      }
+    };
+
+    for (const [type, { newCount, currentCount }] of Object.entries(vehicleTypes)) {
+      const diff = newCount - currentCount;
+      if (diff > 0) {
+        const values = Array(diff).fill([id, type]);
+        await conn.query(
+          `INSERT INTO ParkingSlots (location_id, vehicle_type) VALUES ?`,
+          [values]
+        );
+      }
+    }
+
+    await conn.query("COMMIT");
+    res.json({ message: "✅ Location updated successfully!" });
+
+  } catch (error) {
+    await db.promise().query("ROLLBACK");
+    console.error("❌ Error updating location:", error);
+    res.status(500).json({ message: "Update failed", error: error.message });
+  }
+};
+
+
+
+
+
 
 import nodemailer from "nodemailer";
 
@@ -572,8 +693,8 @@ export const getAllBookings = async (req, res) => {
 };
 
 
-export const getAdminUser=async(req,res)=>{
-  const {userId} = req.params;
+export const getAdminUser = async (req, res) => {
+  const { userId } = req.params;
 
   if (!userId) {
     return res.status(400).json({ message: "User ID not found in request." });
