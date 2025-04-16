@@ -205,22 +205,6 @@ const Profile = () => {
             </div>
           </div>
         </nav>
-
-        {/* <div className="mt-6 space-y-4 pl-8 pt-8">
-          <p className="text-lg"><strong>Name:</strong> {user.name} </p>
-          <p className="text-lg"><strong>Email:</strong> {user.email}</p>
-          <p className="text-lg"><strong>Role:</strong> {user.role}</p>
-          <p className="text-lg"><strong>Phone:</strong> {user.phone_number}</p>
-        </div>
-
-        <div className="mt-6 space-x-4 pl-8">
-          <button onClick={() => setShowEditModal(true)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-            Edit Profile
-          </button>
-          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-            Logout
-          </button>
-        </div> */}
         <div className="profile-card">
           <div className="profile-details">
             <h2 className="user-name">{user.name}</h2>
