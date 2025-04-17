@@ -62,3 +62,12 @@ CREATE TABLE permanent_reserve (
     FOREIGN KEY (slot_id) REFERENCES parkingslots(slot_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+
+ALTER TABLE bookings
+DROP FOREIGN KEY bookings_ibfk_3;
+
+ALTER TABLE bookings
+ADD CONSTRAINT bookings_ibfk_3
+FOREIGN KEY (slot_id) REFERENCES parkingslots(slot_id)
+ON DELETE CASCADE;
