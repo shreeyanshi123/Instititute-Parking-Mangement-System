@@ -4,6 +4,9 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import axios from "axios";
+import { useEffect } from "react";
+import { useState } from "react";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Profile from "./pages/common/Profile";
@@ -21,8 +24,24 @@ import VisitorLocationDetails from "./pages/user/VisitorLocationDetails"
 import VisitorNotifications from "./pages/user/VisitorNotifications";
 import AdminHistory from "./pages/admin/AdminHistory";
 import AdminUserHistory from "./pages/admin/AdminUserHistory";
+import CheckAuth from "./components/common/check-auth";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/auth/getUser", { withCredentials: true })
+      .then((res) => {
+        setUser(res.data.user);
+        setIsAuthenticated(true);
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+        setUser(null);
+      });
+  }, []);
   return (
     <Router>
       <Routes>
@@ -37,98 +56,98 @@ function App() {
         <Route
           path="/profile"
           element={
-            // <ProtectedRoute>
+            
             <Profile />
-            //  </ProtectedRoute>
+            
           }
         />
         <Route
           path="/admin/addlocation"
           element={
-            // <ProtectedRoute>
+            
             <AddLocation />
-            //  </ProtectedRoute>
+            
           }
         />
         <Route
           path="admin/location/:id"
           element={
-            // <ProtectedRoute>
+            
             <AdminLocationDetails />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="/admin/location/:id/edit"
           element={
-            // <ProtectedRoute>
+            
             <EditLocation />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="admin/home"
           element={
-            // <ProtectedRoute>
+            
             <AdminHome />
-            // </ProtectedRoute>
+            
           }
         />
          <Route
           path="admin/history"
           element={
-            // <ProtectedRoute>
+            
             <AdminHistory />
-            // </ProtectedRoute>
+            
           }
         />
          <Route
           path="admin/user/:userId"
           element={
-            // <ProtectedRoute>
+            
             <AdminUserHistory />
-            // </ProtectedRoute>
+            
           }
         />
 
         <Route
           path="user/home"
           element={
-            // <ProtectedRoute>
+            
             <UserHome />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="user/getUser"
           element={
-            // <ProtectedRoute>
+            
             <GetUser />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="user/history"
           element={
-            // <ProtectedRoute>
+            
             <UserHistory />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="user/location/:id"
           element={
-            // <ProtectedRoute>
+            
             <UserLocationDetails />
-            // </ProtectedRoute>
+            
           }
         />
         <Route
           path="visitor/location/:id"
           element={
-            // <ProtectedRoute>
+            
             <VisitorLocationDetails />
-            // </ProtectedRoute>
+            
           }
         />
         <Route path="/visitor/notifications" 
