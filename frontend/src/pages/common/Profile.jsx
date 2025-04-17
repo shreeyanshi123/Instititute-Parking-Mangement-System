@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import { AiOutlineHome } from "react-icons/ai";
+import { BsCalendarCheck } from "react-icons/bs";
+import { MdAddLocationAlt } from "react-icons/md";
+import { RiLockPasswordLine } from "react-icons/ri";
+import { FiLogOut } from 'react-icons/fi';
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 
@@ -10,6 +15,7 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [id, setId] = useState('');
 
+  const [isOpen, setIsOpen] = useState(false);
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -128,46 +134,98 @@ const Profile = () => {
 
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-gray-190">
       {/* Left Sidebar */}
-      <aside className="w-1/4 bg-white shadow-md p-6 flex flex-col items-center">
+      <aside className="w-1/4 bg-gray-100 text-gray-300 shadow-md p-6 flex flex-col items-center side-bar">
         <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center text-2xl font-bold text-white">
           {user.name.charAt(0)}
         </div>
         <h2 className="mt-4 text-xl font-semibold">{user.name}</h2>
         <p className="text-gray-500">{user.role}</p>
 
-        <nav className="mt-6 space-y-2 w-full text-center">
-          <Link to={user.role === "admin" ? "/admin/home" : "/user/home"} className="block py-2 text-gray-600 hover:text-blue-600">Home</Link>
-          <Link
-            to={user.role === "admin" ? "/admin/history" : "/user/history"}
-            className="block py-2 text-gray-600 hover:text-blue-600"
-          >
-            {user.role === "admin" ? "Bookings History" : "Past Bookings"}
+        {/* className="block py-2 text-gray-600 hover:text-blue-600"  w-full */}
+
+        <nav className="mt-10 space-y-2 w-full flex flex-col items-center">
+          <Link to={user.role === "admin" ? "/admin/home" : "/user/home"} 
+          className="w-4/5 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-slate-800 hover:text-blue-400 transition-all duration-200">
+            <AiOutlineHome className="text-lg" />
+            Home
           </Link>
 
-          <button onClick={() => setShowChangePassword(true)} className="block w-full py-2 text-gray-600 hover:text-blue-600">Change Password</button>
+          <Link
+            to={user.role === "admin" ? "/admin/history" : "/user/history"}
+            className="w-4/5 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-slate-800 hover:text-blue-400 transition-all duration-200"
+          >
+            <BsCalendarCheck className="text-lg" />
+            {user.role === "admin" ? "Bookings History" : "Past Bookings"}
+          </Link>
+          
+          {user.role === "admin" && (
+            <Link to="/admin/addlocation" 
+             className="w-4/5 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-slate-800 hover:text-blue-400 transition-all duration-200">
+              <MdAddLocationAlt className="text-lg" />
+              Add Location
+            </Link>
+          )}
+
+          <button onClick={() => setShowChangePassword(true)}
+           className="w-4/5 flex items-center gap-2 px-2 py-2 rounded-md hover:bg-slate-800 hover:text-blue-400 transition-all duration-200">
+            <RiLockPasswordLine className="text-lg" />
+            Change Password
+          </button>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <div className="mt-6 space-y-4">
-          <p className="text-lg"><strong>Name:</strong> {user.name} </p>
-          <p className="text-lg"><strong>Email:</strong> {user.email}</p>
-          <p className="text-lg"><strong>Role:</strong> {user.role}</p>
-          <p className="text-lg"><strong>Phone:</strong> {user.phone_number}</p>
-        </div>
+      <main className="flex-1">
+        {/* <h1 className="text-3xl font-bold">Profile</h1> */}
 
-        <div className="mt-6 space-x-4">
-          <button onClick={() => setShowEditModal(true)} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-            ✏️ Edit Profile
-          </button>
-          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-            🚪 Logout
-          </button>
-        </div>
+        <nav className="navbar">
+          <div className="navbar-left">
+            <h2 className="profile-heading">Profile</h2>
+          </div>
+          <div className="navbar-right">
+            <button className="nav-bar-role">{user.role}</button>
+            <div className="relative">
+              <button onClick={() => setIsOpen(!isOpen)} className="flex items-center space-x-2">
+                <span className="hidden md:inline profile-initial profile-circle">{user.name.charAt(0)}</span>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isOpen && (
+                <div className=" dot absolute right-0 mt-2 w-40 bg-white text-black shadow-lg rounded-md overflow-hidden z-50">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red flex items-center"
+                  >
+                   <FiLogOut className="ml-3 mr-2" /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </nav>
+        <div className="profile-card">
+          <div className="profile-details">
+            <h2 className="user-name">{user.name}</h2>
+            <div className="info-box">
+              <span className="info-title">Email</span>
+              <p className="info-value">{user.email}</p>
+            </div>
+            <div className="info-box">
+              <span className="info-title">Role</span>
+              <p className="info-value">{user.role}</p>
+            </div>
+            <div className="info-box">
+              <span className="info-title">Phone</span>
+              <p className="info-value">{user.phone_number}</p>
+            </div>
+          </div>
+          <div className="profile-actions">
+            <button className="edit-button" onClick={() => setShowEditModal(true)}>Edit Profile</button>
+            {/* <button className="logout-button" onClick={handleLogout}>Logout</button> */}
+          </div>
+        </div>  
       </main>
 
       {/* Edit Profile Modal */}

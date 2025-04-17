@@ -22,7 +22,7 @@ const AdminLocationCard = ({ id, image, name, onDelete }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 w-64 h-64 flex flex-col items-center justify-between">
+    <div className="bg-white rounded-lg shadow-md p-4 w-64 h-64 flex flex-col items-center justify-between location-card">
       <img
         src={image}
         alt={name}
