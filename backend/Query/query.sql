@@ -64,6 +64,7 @@ CREATE TABLE permanent_reserve (
 );
 
 
+
 ALTER TABLE bookings
 DROP FOREIGN KEY bookings_ibfk_3;
 
