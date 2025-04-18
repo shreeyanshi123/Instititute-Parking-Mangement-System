@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import backgroundImage from "../../assets/road.png";
 
 
 const EditLocation = () => {
@@ -94,6 +95,13 @@ const EditLocation = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden add-location p-6">
+      <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${backgroundImage})` }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>{" "}
+                    {/* Black overlay ONLY on the background */}
+                  </div>
       <button
         onClick={() => navigate("/admin/home")}
         className="absolute top-5 left-5 px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-600 transition-all"

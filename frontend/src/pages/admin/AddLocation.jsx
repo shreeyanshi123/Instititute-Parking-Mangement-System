@@ -160,6 +160,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 // import backgroundImage from "../../assets/road";
 import LocationImageUpload from "../../components/Admin/LocationImageUpload";
+import backgroundImage from "../../assets/road.png";
 
 const AddLocation = () => {
   const [locationName, setLocationName] = useState("");
@@ -206,8 +207,13 @@ const AddLocation = () => {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden add-location p-6">
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 "></div>
+      <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${backgroundImage})` }}
+            >
+              <div className="absolute inset-0 bg-black/40"></div>{" "}
+              {/* Black overlay ONLY on the background */}
+            </div>
 
       {/* Back Button (Top-Left) */}
       <button

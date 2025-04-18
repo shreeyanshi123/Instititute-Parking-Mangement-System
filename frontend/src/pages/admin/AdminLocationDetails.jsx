@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminNavbar from "../../components/Admin/AdminNavbar";
+import backgroundImage from "../../assets/bus.png";
 
 const AdminLocationDetails = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [location, setLocation] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -135,10 +137,22 @@ const AdminLocationDetails = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${backgroundImage})` }}
+            >
+              <div className="absolute inset-0 bg-black/40"></div>{" "}
+              {/* Black overlay ONLY on the background */}
+            </div>
       <AdminNavbar />
-
       <div className="relative z-10 flex flex-col items-center w-full px-4 py-14">
-        <h1 className="text-4xl font-bold mt-10 mb-14 text-black">
+      <button
+        onClick={() => navigate("/admin/home")}
+        className="absolute top-10 left-5 px-4 py-2 bg-gray-700 text-white rounded-lg shadow-md hover:bg-gray-600 transition-all"
+      >
+        🔙 Back to Home
+      </button>
+        <h1 className="text-4xl font-bold mt-10 mb-14 text-white">
           {location.name} - Parking Slots
         </h1>
 
