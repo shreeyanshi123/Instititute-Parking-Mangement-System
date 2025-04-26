@@ -218,7 +218,7 @@ const UserLocationDetails = () => {
           ))}
         </div> */}
 
-<UserNavBar />
+{/* <UserNavBar /> */}
 
 <div className="relative z-10 flex flex-col items-center w-full px-4 py-14">
   <h1 className="text-4xl font-bold mt-10 mb-14 text-black">
