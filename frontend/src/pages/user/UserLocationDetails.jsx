@@ -248,7 +248,7 @@ const UserLocationDetails = () => {
             {location.slots[type]?.map((slot, index) => (
               <div
                 key={index}
-                onClick={() => handleSlotClick(type, index)}
+                onClick={() => handleSlotClick(slot)}
                 className={`${
                   type === "bus"
                     ? "w-20 h-[115px]"
