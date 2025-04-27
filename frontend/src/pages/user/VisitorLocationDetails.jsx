@@ -189,8 +189,63 @@ const VisitorLocationDetails = () => {
                 )) || <p>No slots available</p>}
               </div>
             </div>
-          ))}
+          ))} */}
+        {/* </div> */}
+
+        {/* <UserNavBar /> */}
+
+<div className="relative z-10 flex flex-col items-center w-full px-4 py-14">
+  <h1 className="text-4xl font-bold mt-10 mb-14 text-black">
+    {location.name} - Parking Slots
+  </h1>
+
+  <div className="w-full max-w-6xl bg-gray-900 p-8 rounded-lg shadow-xl grid justify-center">
+    <div className="grid grid-cols-3 gap-12">
+      {["twoWheeler", "fourWheeler", "bus"].map((type, i) => (
+        <div className="flex flex-col items-center text-center" key={i}>
+          <h2 className="text-xl font-semibold mb-4 text-white">
+            {type === "twoWheeler"
+              ? "🛵 2-Wheeler"
+              : type === "fourWheeler"
+              ? "🚗 4-Wheeler"
+              : "🚌 Bus"}
+          </h2>
+          <div
+            className={`grid ${
+              type === "bus"
+                ? "grid-cols-3"
+                : type === "fourWheeler"
+                ? "grid-cols-4"
+                : "grid-cols-5"
+            } gap-3`}
+          >
+            {location.slots[type]?.map((slot, index) => (
+              <div
+                key={index}
+                onClick={() => handleSlotClick(slot)}
+                className={`${
+                  type === "bus"
+                    ? "w-20 h-[115px]"
+                    : type === "fourWheeler"
+                    ? "w-12 h-[65px]"
+                    : "w-9 h-14"
+                } flex items-center justify-center rounded-md text-sm font-bold text-white shadow-md transition-all cursor-pointer ${
+                  !slot.is_empty
+                    ? "bg-red-300 hover:bg-red-400"
+                    : slot.reserved
+                    ? "bg-yellow-300 hover:bg-yellow-400"
+                    : "bg-green-600 hover:bg-green-400"
+                }`}
+              >
+                {!slot.is_empty ? "O" : slot.reserved ? "R" : "UO"}
+              </div>
+            ))}
+          </div>
         </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Booking Form Modal */}
         {selectedSlot && (
