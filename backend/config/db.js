@@ -1,21 +1,23 @@
-import mysql from 'mysql2';
-import dotenv from 'dotenv';
+const mysql = require('mysql2');
 
-dotenv.config();
-
- const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',      
-    user: process.env.USER_NAME || 'root',  
-    password: process.env.DB_PASSWORD || 'your_password',
-    database: process.env.DB_NAME || 'ParkingManagementSystem',
+const connection = mysql.createConnection({
+  host: 'gondola.proxy.rlwy.net',
+  port: 27706,
+  user: 'root',
+  password: 'zuaZZfFgDAYWmfGlXWMiEKmWNmTWOKyr',
+  database: 'railway'
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error('Database connection failed:', err.message);
-        return;
-    }
-    console.log('Connected to MySQL Database!');
+connection.connect((err) => {
+  if (err) {
+    console.error('Connection error:', err.stack);
+    return;
+  }
+  console.log('Connected as id', connection.threadId);
 });
 
-export default db; 
+// Example query
+connection.query('SHOW TABLES', (err, results) => {
+  if (err) throw err;
+  console.log(results);
+});
